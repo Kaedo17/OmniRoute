@@ -36,7 +36,7 @@ export const NOAUTH_PROVIDERS = {
     freeNote:
       "No API key required — public OpenCode endpoint with Kimi, GLM, Qwen, MiMo, MiniMax models.",
     notice: {
-      text: "OpenCode Free uses the public OpenCode endpoint (https://opencode.ai/zen/v1). No signup or API key needed. Rate limits apply.",
+      text: "OpenCode Free uses the public OpenCode endpoint (https://opencode.ai/inference/v1). No signup or API key needed. Rate limits apply.",
     },
   },
   "duckduckgo-web": {

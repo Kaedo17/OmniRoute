@@ -83,8 +83,13 @@ describe("OpenCode DeepSeek json_schema fallback", () => {
 
     assert.deepEqual(result.response_format, { type: "json_object" });
 
+    // The free-tier fingerprint appends a placeholder system note, but the
+    // json_schema instruction must NOT be added for a plain json_object request.
     assert.equal(
-      result.messages.some((message: Record<string, unknown>) => message.role === "system"),
+      result.messages.some(
+        (message: Record<string, unknown>) =>
+          typeof message.content === "string" && message.content.includes("strictly follows")
+      ),
       false
     );
   });
@@ -204,8 +209,13 @@ describe("OpenCode DeepSeek json_schema fallback", () => {
 
     assert.equal(result.response_format, undefined);
 
+    // No json_schema instruction is injected for an ordinary DeepSeek request;
+    // only the free-tier fingerprint's placeholder note may appear.
     assert.equal(
-      result.messages.some((message: Record<string, unknown>) => message.role === "system"),
+      result.messages.some(
+        (message: Record<string, unknown>) =>
+          typeof message.content === "string" && message.content.includes("strictly follows")
+      ),
       false
     );
   });

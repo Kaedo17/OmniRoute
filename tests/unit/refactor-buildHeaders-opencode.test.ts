@@ -92,16 +92,16 @@ test("OpencodeExecutor.buildHeaders: omits User-Agent when no client UA and synt
   }
 });
 
-test("OpencodeExecutor.buildHeaders: preserves an opencode-cli-like client User-Agent when provided", () => {
-  // Since #10571 flips CLI-header synthesis to on-by-default, a non-CLI-looking client UA
-  // (e.g. "opencode/1.17.12") is now REPLACED by the synthesized default (see the
-  // #5997/#10571 non-CLI-UA-replaced test in opencode-cli-headers-synthesis-5997.test.ts).
-  // Only a UA that already looks like the real OpenCode CLI ("opencode-cli/…") is preserved.
+test("OpencodeExecutor.buildHeaders: preserves a v2 opencode client User-Agent when provided", () => {
+  // Since #10571 flips CLI-header synthesis to on-by-default, a client UA that is not
+  // the OpenCode v2 CLI shape ("opencode/<channel>/<version>/<client>") is REPLACED by
+  // the synthesized default. The v1 "opencode-cli/…" and "opencode/1.x" forms are now
+  // replaced too (v2 gate, 9router PR #4842) — only a v2-shaped UA is preserved.
   const executor = new OpencodeExecutor("opencode");
   const headers = executor.buildHeaders({ apiKey: "key-1" }, true, {
-    "User-Agent": "opencode-cli/1.17.12",
+    "User-Agent": "opencode/latest/2.0.29/cli",
   });
-  assert.equal(headers["User-Agent"], "opencode-cli/1.17.12");
+  assert.equal(headers["User-Agent"], "opencode/latest/2.0.29/cli");
 });
 
 test("OpencodeExecutor.buildHeaders: omits x-opencode-client when absent and synthesis is explicitly off", () => {

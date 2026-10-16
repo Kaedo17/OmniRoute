@@ -4461,8 +4461,8 @@
       }
     },
     "url": {
-      "nonStream": "https://opencode.ai/zen/v1",
-      "stream": "https://opencode.ai/zen/v1"
+      "nonStream": "https://opencode.ai/inference/v1",
+      "stream": "https://opencode.ai/inference/v1"
     }
   },
   "opencode-go": {

@@ -52,11 +52,11 @@ describe("forwardOpencodeClientHeaders – x-opencode-* headers", () => {
     assert.equal(headers["x-opencode-session"], "sess-123");
   });
 
-  it("forwards x-opencode-request", () => {
+  it("does NOT forward x-opencode-request (rejected by the v2 gate)", () => {
     const headers = h();
     const clientHeaders = { "x-opencode-request": "req-abc" };
     forwardOpencodeClientHeaders(headers, clientHeaders);
-    assert.equal(headers["x-opencode-request"], "req-abc");
+    assert.equal(headers["x-opencode-request"], undefined);
   });
 
   it("forwards x-opencode-project", () => {
@@ -73,7 +73,7 @@ describe("forwardOpencodeClientHeaders – x-opencode-* headers", () => {
     assert.equal(headers["x-opencode-client"], "opencode-cli");
   });
 
-  it("forwards all four x-opencode-* headers at once", () => {
+  it("forwards the x-opencode-* headers it still supports at once", () => {
     const headers = h();
     const clientHeaders = {
       "x-opencode-session": "sess-1",
@@ -83,7 +83,7 @@ describe("forwardOpencodeClientHeaders – x-opencode-* headers", () => {
     };
     forwardOpencodeClientHeaders(headers, clientHeaders);
     assert.equal(headers["x-opencode-session"], "sess-1");
-    assert.equal(headers["x-opencode-request"], "req-1");
+    assert.equal(headers["x-opencode-request"], undefined);
     assert.equal(headers["x-opencode-project"], "/proj");
     assert.equal(headers["x-opencode-client"], "cli");
   });
@@ -92,13 +92,11 @@ describe("forwardOpencodeClientHeaders – x-opencode-* headers", () => {
     const headers = h();
     const clientHeaders = {
       "X-OpenCode-Session": "Sess-Upper",
-      "X-OpenCode-Request": "Req-Upper",
       "X-OpenCode-Project": "/Upper",
       "X-OpenCode-Client": "UpperClient",
     };
     forwardOpencodeClientHeaders(headers, clientHeaders);
     assert.equal(headers["x-opencode-session"], "Sess-Upper");
-    assert.equal(headers["x-opencode-request"], "Req-Upper");
     assert.equal(headers["x-opencode-project"], "/Upper");
     assert.equal(headers["x-opencode-client"], "UpperClient");
   });
@@ -186,19 +184,29 @@ describe("forwardOpencodeClientHeaders – synthesizeRequestId", () => {
     assert.equal(headers["x-opencode-session"], "aff-1");
   });
 
-  it("synthesizes x-opencode-request (UUID) when session and request are missing", () => {
+  it("mirrors x-opencode-session into x-opencode-session-id / x-session-affinity / x-session-id", () => {
     const headers = h();
     const clientHeaders = { "x-session-affinity": "aff-2" };
     forwardOpencodeClientHeaders(headers, clientHeaders, {
       synthesizeRequestId: true,
     });
-    // x-opencode-request should be a valid UUID string
-    assert.ok(headers["x-opencode-request"], "should have synthesized x-opencode-request");
-    assert.match(
-      headers["x-opencode-request"],
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-      "synthesized request id should be a UUID"
+    assert.equal(headers["x-opencode-session"], "aff-2");
+    assert.equal(headers["x-opencode-session-id"], "aff-2");
+    assert.equal(headers["x-session-affinity"], "aff-2");
+    assert.equal(headers["x-session-id"], "aff-2");
+    assert.equal(headers["x-opencode-request"], undefined);
+  });
+
+  it("does NOT synthesize a request id when only the session is missing", () => {
+    const headers = h();
+    forwardOpencodeClientHeaders(
+      headers,
+      { "x-session-affinity": "aff-6" },
+      {
+        synthesizeRequestId: true,
+      }
     );
+    assert.equal(headers["x-opencode-request"], undefined);
   });
 
   it("does NOT overwrite existing x-opencode-session", () => {
@@ -252,13 +260,13 @@ describe("forwardOpencodeClientHeaders – edge cases", () => {
     const headers = h();
     const clientHeaders = {
       "x-opencode-session": "client-sess",
-      "x-opencode-request": "client-req",
+      "x-opencode-client": "client-cli",
     };
     // Pre-set the headers — forwardOpencodeClientHeaders sets them from clientHeaders,
     // which is the same value here. The function does overwrite with the same value.
     // This test documents that client headers are the authoritative source.
     forwardOpencodeClientHeaders(headers, clientHeaders);
     assert.equal(headers["x-opencode-session"], "client-sess");
-    assert.equal(headers["x-opencode-request"], "client-req");
+    assert.equal(headers["x-opencode-client"], "client-cli");
   });
 });

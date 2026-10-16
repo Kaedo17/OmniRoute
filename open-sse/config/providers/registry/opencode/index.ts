@@ -5,7 +5,10 @@ export const opencodeProvider: RegistryEntry = {
   alias: "oc",
   format: "openai",
   executor: "opencode",
-  baseUrl: "https://opencode.ai/zen/v1",
+  // OpenCode v2 moved free inference to /inference/v1; /zen/v1 still answers
+  // some free ids but is the legacy lane (mirrors 9router PR #4842). The model
+  // list endpoint stays on /zen/v1/models, which is unchanged upstream.
+  baseUrl: "https://opencode.ai/inference/v1",
   modelsUrl: "https://opencode.ai/zen/v1/models",
   authType: "apikey",
   authHeader: "Authorization",

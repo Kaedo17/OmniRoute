@@ -1,45 +1,37 @@
 /**
- * Regression test for #5997 — opencode-go/opencode-zen upstream requests must carry
- * OpenCode CLI identity headers even when the client did not supply them.
+ * Regression test for #5997 — opencode upstream requests must carry OpenCode CLI
+ * identity headers even when the client did not supply them.
  *
- * On a datacenter VPS, `opencode.ai/zen/go/v1/chat/completions` is fronted by
- * Cloudflare, which 403s (HTML challenge) requests lacking CLI identity. The reporter's
- * control curl proved the exact headers that succeed:
- *   User-Agent: opencode-cli/1.0.0 · x-opencode-client: cli ·
- *   x-opencode-project: default · x-opencode-request/-session: fresh UUIDs
- * Forwarding those headers from the client also fixes it — confirming the upstream
- * expects CLI identity. Since most OpenAI-compatible clients never send them,
- * `OpencodeExecutor.buildHeaders()` must synthesize the defaults when absent.
+ * On a datacenter VPS, `opencode.ai` is fronted by Cloudflare, which 403s (HTML
+ * challenge) requests lacking CLI identity. Since most OpenAI-compatible clients
+ * never send those headers, `OpencodeExecutor.buildHeaders()` must synthesize the
+ * defaults when absent. Client-supplied values always take precedence (defaults
+ * only fill gaps), and the UA/client/project defaults are env-overridable.
  *
- * Client-supplied values always take precedence (defaults only fill gaps), and the
- * UA/client/project defaults are env-overridable.
- *
- * PR #10571 flips the executor-level synthesis to ON BY DEFAULT (previously it was
- * OPT-IN via `OPENCODE_SYNTHESIZE_CLI_HEADERS=true`, per an earlier #5997 decision to
- * stay off-by-default pending live validation, out of concern that a wrong fabricated
- * value risks upstream rejection — #5720 regressed with "opencode/local"). It also
- * changes the synthesized default values themselves (userAgent "opencode-cli/1.0.0" →
- * "opencode", client "cli" → "desktop", project "default" → "global") to match
- * 9router's defaults. Flipping the on/off default is a deployment-behavior decision
- * this PR did NOT get explicit owner sign-off for — see the PR discussion for #10571
- * (this test file only asserts what the shipped code actually does; it does not bless
- * the decision to flip the default). Opt-out is now `OPENCODE_SYNTHESIZE_CLI_HEADERS=false`.
+ * PR #10571 turned the executor-level synthesis ON BY DEFAULT and changed the
+ * synthesized defaults. The OpenCode v2 free-tier gate (2026-10, mirrored from
+ * decolua/9router PR #4842) then tightened the identity:
+ *   - User-Agent must be the v2 shape `opencode/<channel>/<version>/<client>`
+ *     (v1 `opencode/1.18.x` and `opencode-cli/...` forms are replaced);
+ *   - the conversation session id is mirrored into `x-opencode-session-id`,
+ *     `x-session-affinity` and `x-session-id`;
+ *   - `x-opencode-request` is no longer synthesized or forwarded (the v2 CLI
+ *     does not send it).
+ * Opt-out remains `OPENCODE_SYNTHESIZE_CLI_HEADERS=false`.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { forwardOpencodeClientHeaders } from "../../open-sse/utils/opencodeHeaders.ts";
-import { OpencodeExecutor } from "../../open-sse/executors/opencode.ts";
+import { OpencodeExecutor, DEFAULT_OPENCODE_CLI_UA } from "../../open-sse/executors/opencode.ts";
+import { OPENCODE_SESSION_RE } from "../../open-sse/utils/opencodeFingerprint.ts";
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SESSION_RE = OPENCODE_SESSION_RE;
 
-// Values passed explicitly to forwardOpencodeClientHeaders()'s `cliDefaults` option in
-// the tests below — these are caller-supplied, independent of OpencodeExecutor's own
-// env-driven defaults (covered separately by the OPENCODE_DEFAULTS constant + the
-// OpencodeExecutor.buildHeaders tests further down).
-const CLI_DEFAULTS = { userAgent: "opencode-cli/1.0.0", client: "cli", project: "default" };
+// Caller-supplied cliDefaults (used to test forwardOpencodeClientHeaders directly).
+const CLI_DEFAULTS = { userAgent: "opencode/latest/2.0.26/cli", client: "cli", project: "default" };
 
-// PR #10571's new synthesized defaults for OpencodeExecutor.buildHeaders() itself.
-const OPENCODE_DEFAULTS = { userAgent: "opencode", client: "desktop", project: "global" };
+// OpencodeExecutor.buildHeaders()'s own synthesized defaults.
+const OPENCODE_DEFAULTS = { userAgent: DEFAULT_OPENCODE_CLI_UA, client: "cli", project: "global" };
 
 function withEnv(key: string, value: string | undefined, fn: () => void) {
   const saved = process.env[key];
@@ -53,19 +45,27 @@ function withEnv(key: string, value: string | undefined, fn: () => void) {
   }
 }
 
+function assertSessionMirrors(headers: Record<string, string>): void {
+  const session = headers["x-opencode-session"];
+  assert.ok(session, "x-opencode-session must be present");
+  assert.equal(headers["x-opencode-session-id"], session);
+  assert.equal(headers["x-session-affinity"], session);
+  assert.equal(headers["x-session-id"], session);
+  assert.equal(headers["x-opencode-request"], undefined);
+}
+
 test("forwardOpencodeClientHeaders: cliDefaults synthesize all CLI identity headers when absent [#5997]", () => {
   const headers: Record<string, string> = {};
   forwardOpencodeClientHeaders(headers, {}, { cliDefaults: CLI_DEFAULTS });
 
-  assert.equal(headers["User-Agent"], "opencode-cli/1.0.0");
+  assert.equal(headers["User-Agent"], CLI_DEFAULTS.userAgent);
   assert.equal(headers["x-opencode-client"], "cli");
   assert.equal(headers["x-opencode-project"], "default");
-  assert.match(headers["x-opencode-request"] ?? "", UUID_RE);
-  assert.match(headers["x-opencode-session"] ?? "", UUID_RE);
-  assert.notEqual(headers["x-opencode-request"], headers["x-opencode-session"]);
+  assert.match(headers["x-opencode-session"] ?? "", SESSION_RE);
+  assertSessionMirrors(headers);
 });
 
-test("forwardOpencodeClientHeaders: non-CLI client UA is REPLACED with the CLI UA; other headers keep client-wins [#5997 follow-up]", () => {
+test("forwardOpencodeClientHeaders: non-v2 client UA is REPLACED with the CLI UA; other headers keep client-wins [#5997 follow-up]", () => {
   const headers: Record<string, string> = {};
   const clientHeaders = {
     "User-Agent": "curl/8.5.0",
@@ -76,18 +76,29 @@ test("forwardOpencodeClientHeaders: non-CLI client UA is REPLACED with the CLI U
   };
   forwardOpencodeClientHeaders(headers, clientHeaders, { cliDefaults: CLI_DEFAULTS });
 
-  assert.equal(headers["User-Agent"], "opencode-cli/1.0.0");
+  assert.equal(headers["User-Agent"], CLI_DEFAULTS.userAgent);
   assert.equal(headers["x-opencode-client"], "vscode");
   assert.equal(headers["x-opencode-project"], "acme");
-  assert.equal(headers["x-opencode-request"], "req-from-client");
-  assert.equal(headers["x-opencode-session"], "sess-from-client");
+  // x-opencode-request is never forwarded now.
+  assert.equal(headers["x-opencode-request"], undefined);
+  // A non-`ses_` client session hint is translated into a gate-valid id, mirrored everywhere.
+  assert.notEqual(headers["x-opencode-session"], "sess-from-client");
+  assert.match(headers["x-opencode-session"] ?? "", SESSION_RE);
+  assertSessionMirrors(headers);
 });
 
-test("forwardOpencodeClientHeaders: an existing opencode-cli UA is preserved (real CLI version intact)", () => {
+test("forwardOpencodeClientHeaders: a v2 CLI UA is preserved (real CLI identity intact)", () => {
+  const headers: Record<string, string> = {};
+  const clientHeaders = { "User-Agent": "opencode/latest/2.5.0/cli" };
+  forwardOpencodeClientHeaders(headers, clientHeaders, { cliDefaults: CLI_DEFAULTS });
+  assert.equal(headers["User-Agent"], "opencode/latest/2.5.0/cli");
+});
+
+test("forwardOpencodeClientHeaders: a v1 opencode-cli UA is replaced with the v2 default", () => {
   const headers: Record<string, string> = {};
   const clientHeaders = { "User-Agent": "opencode-cli/2.5.0" };
   forwardOpencodeClientHeaders(headers, clientHeaders, { cliDefaults: CLI_DEFAULTS });
-  assert.equal(headers["User-Agent"], "opencode-cli/2.5.0");
+  assert.equal(headers["User-Agent"], CLI_DEFAULTS.userAgent);
 });
 
 test("forwardOpencodeClientHeaders: without cliDefaults, no synthesis (DefaultExecutor path unchanged)", () => {
@@ -96,16 +107,17 @@ test("forwardOpencodeClientHeaders: without cliDefaults, no synthesis (DefaultEx
   assert.equal(headers["User-Agent"], undefined);
   assert.equal(headers["x-opencode-client"], undefined);
   assert.equal(headers["x-opencode-project"], undefined);
+  assert.equal(headers["x-opencode-request"], undefined);
 });
 
-test("OpencodeExecutor.buildHeaders: synthesizes CLI defaults by default — flag unset [#10571]", () => {
+test("OpencodeExecutor.buildHeaders: synthesizes v2 CLI defaults by default — flag unset [#10571]", () => {
   withEnv("OPENCODE_SYNTHESIZE_CLI_HEADERS", undefined, () => {
     const executor = new OpencodeExecutor("opencode-go");
     const headers = executor.buildHeaders(null, true, null, "glm-5.2");
     assert.equal(headers["User-Agent"], OPENCODE_DEFAULTS.userAgent);
     assert.equal(headers["x-opencode-client"], OPENCODE_DEFAULTS.client);
     assert.equal(headers["x-opencode-project"], OPENCODE_DEFAULTS.project);
-    assert.match(headers["x-opencode-request"] ?? "", UUID_RE);
+    assertSessionMirrors(headers);
   });
 });
 
@@ -117,8 +129,8 @@ test("OpencodeExecutor.buildHeaders: synthesizes CLI defaults with flag explicit
     assert.equal(headers["User-Agent"], OPENCODE_DEFAULTS.userAgent);
     assert.equal(headers["x-opencode-client"], OPENCODE_DEFAULTS.client);
     assert.equal(headers["x-opencode-project"], OPENCODE_DEFAULTS.project);
-    assert.match(headers["x-opencode-request"] ?? "", UUID_RE);
-    assert.match(headers["x-opencode-session"] ?? "", UUID_RE);
+    assert.match(headers["x-opencode-session"] ?? "", SESSION_RE);
+    assertSessionMirrors(headers);
   });
 });
 

@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import {
   BaseExecutor,
   type ExecuteInput,
@@ -13,6 +12,14 @@ import {
 } from "../utils/reasoningContentInjector.ts";
 import { runWithDirectFetchContext, runWithProxyContext } from "../utils/proxyFetch.ts";
 import { forwardOpencodeClientHeaders } from "../utils/opencodeHeaders.ts";
+import {
+  applyFingerprintTools,
+  generateOpencodeSessionId,
+  isOpencodeFreeModel,
+  isOpencodeFreeTierRequest,
+  restoreFingerprintToolNames,
+  restoreFingerprintToolNamesInLine,
+} from "../utils/opencodeFingerprint.ts";
 import {
   type AccountProxyConfig,
   type RotatableAccount,
@@ -33,6 +40,23 @@ import { isNetworkRotationSharedEgressGuardEnabled } from "@/shared/utils/featur
  */
 export type OpencodeAccountProxyConfig = AccountProxyConfig;
 
+/**
+ * Default OpenCode CLI identity. The free-tier gate has rejected the v1
+ * `opencode/1.18.x` UA form in past waves, so synthesize the v2 shape
+ * `opencode/<channel>/<version>/<client>` (mirrors 9router PR #4842, which
+ * pinned `opencode/latest/2.0.26/cli`). Env-overridable via
+ * `OPENCODE_USER_AGENT` / `<PROVIDER>_USER_AGENT`.
+ */
+export const DEFAULT_OPENCODE_CLI_UA = "opencode/latest/2.0.26/cli";
+
+/**
+ * Public bearer token OpenCode's free tier accepts (mirrors 9router's
+ * `Authorization: Bearer public`). Not a secret — it identifies the anonymous
+ * free-tier client. Only sent when no real credential resolved and the request
+ * is on the free tier.
+ */
+export const OPENCODE_PUBLIC_API_KEY = "public";
+
 /** Runtime rotation/cooldown state for one "OpenCode Free" account. */
 interface OpencodeAccountState extends RotatableAccount {
   /** Account id (UI: providerSpecificData.fingerprints[i]); "" for the default direct account. */
@@ -40,31 +64,6 @@ interface OpencodeAccountState extends RotatableAccount {
 }
 
 const EFFORT_LEVELS = ["none", "low", "high", "max"] as const;
-
-/**
- * Models that work WITHOUT any API key on the free/noauth opencode tier.
- *
- * The upstream free tier rotates frequently — when a `-free` suffix model is
- * delisted upstream, the upstream returns "Model X is not supported" (a separate
- * issue from this gate). The set is defined by two data sources:
- *
- *   1. **Known free models** — models explicitly listed in the noauth
- *      `opencode` provider registry (`open-sse/config/providers/registry/opencode/index.ts`).
- *      These are the canonical free models. `deepseek-v4-flash-free` appears in both
- *      the noauth AND the zen registry (it is free on both tiers).
- *   2. **`-free` suffix** — any model whose id ends in `-free`. This automatically
- *      covers upstream free-tier additions without a code deploy.
- *
- * For `opencode-go`, there is no free tier — ALL models require an API key.
- */
-const OPENCODE_FREE_MODELS = new Set([
-  "big-pickle",
-  "deepseek-v4-flash-free",
-  "mimo-v2.5-free",
-  "hy3-free",
-  "nemotron-3-ultra-free",
-  "north-mini-code-free",
-]);
 
 /**
  * Models on opencode-go that support effort-tier aliases. Each entry maps the
@@ -118,19 +117,12 @@ export function parseEffortLevel(model: string): { baseModel: string; effort: st
  * Determine whether a model requires an API key on the given opencode provider.
  *
  * - `opencode-go`: ALL models require a key (no free tier).
- * - `opencode` / `opencode-zen`: premium = any model NOT in the free set (known
- *   free models OR ending in `-free`).
+ * - `opencode` / `opencode-zen`: premium = any model NOT on the free tier
+ *   (known free models OR ending in `-free`).
  * - Unknown models are assumed premium (fail-safe).
  */
 export function isPremiumOpencodeModel(model: string, provider: string): boolean {
-  // opencode-go has no free tier — every model requires a key.
-  if (provider === "opencode-go") return true;
-
-  // Models ending in `-free` are always free on the noauth/zen tier.
-  if (model.endsWith("-free")) return false;
-
-  // Check the known free model catalog.
-  return !OPENCODE_FREE_MODELS.has(model);
+  return !isOpencodeFreeModel(provider, model);
 }
 
 /**
@@ -266,6 +258,14 @@ export class OpencodeExecutor extends BaseExecutor {
   _requestFormat: string | null = null;
 
   /**
+   * Tool-name alias map for the in-flight free-tier request: sent name -> the
+   * caller's original name. Set by `transformRequest` (via
+   * `applyFingerprintTools`) and cleared in `execute`'s finally so the response
+   * normalizer can restore the caller's spelling.
+   */
+  private _toolRenames: Map<string, string> | null = null;
+
+  /**
    * Per-account rotation state, rebuilt from credentials on each request. The
    * default entry (fingerprint "") represents the single anonymous account with
    * no configured proxy — preserves the historical direct pass-through when the
@@ -337,17 +337,22 @@ export class OpencodeExecutor extends BaseExecutor {
   }
 
   /**
-   * Rewrite muse-spark's bogus `finish_reason:"length"` (see the
-   * normalizeMuseSparkFinishReason note) to `"stop"` on both streaming and
-   * non-streaming success responses. Non-muse-spark models pass through
-   * untouched.
+   * Post-process a successful upstream opencode response:
+   * - restore caller tool names that the free-tier fingerprint aliased; and
+   * - rewrite muse-spark's bogus `finish_reason:"length"` (see the
+   *   normalizeMuseSparkFinishReason note) to `"stop"`.
+   *
+   * Both happen on streaming and non-streaming responses. Requests with neither
+   * a rename map nor a muse-spark model pass through untouched.
    */
-  private normalizeMuseSparkResponse(
+  private normalizeOpencodeResponse(
     input: ExecuteInput,
     result: ExecutorExecuteResult
   ): ExecutorExecuteResult {
     const model = String(input.model ?? "");
-    if (!model.startsWith("muse-spark")) return result;
+    const renames = this._toolRenames;
+    const isMuse = model.startsWith("muse-spark");
+    if (!isMuse && !renames?.size) return result;
     if (!("response" in result) || !result.response?.ok || !result.response.body) return result;
     const bodyObj =
       input.body && typeof input.body === "object" && !Array.isArray(input.body)
@@ -367,7 +372,8 @@ export class OpencodeExecutor extends BaseExecutor {
             let out = text;
             try {
               const parsed = JSON.parse(text) as Record<string, unknown>;
-              normalizeMuseSparkFinishReason(parsed, budget);
+              if (isMuse) normalizeMuseSparkFinishReason(parsed, budget);
+              restoreFingerprintToolNames(parsed, renames);
               out = JSON.stringify(parsed);
             } catch {
               /* not JSON — forward verbatim */
@@ -390,8 +396,11 @@ export class OpencodeExecutor extends BaseExecutor {
       };
     }
 
-    // Streaming SSE: line-buffered passthrough with finish_reason rewriting.
-    const normalizer = createMuseSparkStreamFinishNormalizer(budget);
+    // Streaming SSE: line-buffered passthrough with finish_reason and tool-name
+    // rewriting.
+    const finishNormalizer = isMuse ? createMuseSparkStreamFinishNormalizer(budget) : null;
+    const normalizer = (line: string): string =>
+      restoreFingerprintToolNamesInLine(finishNormalizer ? finishNormalizer(line) : line, renames);
     const decoder = new TextDecoder();
     const encoder = new TextEncoder();
     let buffer = "";
@@ -522,7 +531,7 @@ export class OpencodeExecutor extends BaseExecutor {
                 "OPENCODE",
                 `upstream empty rejection on direct account (${chatcmplId}), retrying once…`
               );
-              return this.normalizeMuseSparkResponse(input, await super.execute(input));
+              return this.normalizeOpencodeResponse(input, await super.execute(input));
             }
             log?.debug?.(
               "OPENCODE",
@@ -530,7 +539,7 @@ export class OpencodeExecutor extends BaseExecutor {
             );
           }
         }
-        return this.normalizeMuseSparkResponse(input, single);
+        return this.normalizeOpencodeResponse(input, single);
       }
 
       // This loop only ever dispatches through super.execute() (the HTTP request
@@ -660,7 +669,7 @@ export class OpencodeExecutor extends BaseExecutor {
         }
 
         this.markSuccess(account);
-        return this.normalizeMuseSparkResponse(input, result);
+        return this.normalizeOpencodeResponse(input, result);
       }
 
       // The loop exhausted without a result. If it's because every remaining
@@ -674,9 +683,10 @@ export class OpencodeExecutor extends BaseExecutor {
       }
 
       // All accounts returned 429 (or errored) — surface the last response.
-      return this.normalizeMuseSparkResponse(input, lastResult ?? (await super.execute(input)));
+      return this.normalizeOpencodeResponse(input, lastResult ?? (await super.execute(input)));
     } finally {
       this._requestFormat = null;
+      this._toolRenames = null;
     }
   }
 
@@ -723,6 +733,19 @@ export class OpencodeExecutor extends BaseExecutor {
       } else {
         headers["Authorization"] = `Bearer ${key}`;
       }
+    } else {
+      // Keyless free tier (noauth `opencode`): the upstream expects the public
+      // bearer token. Mirrors 9router PR #4842. Only used when no real key
+      // resolved, so authenticated paths are never affected. Kept as a local
+      // constant rather than a registry `anonymousApiKey` so OpenCode Free's
+      // credential requirement stays "none" (not "optional").
+      if (typeof model === "string" && isOpencodeFreeTierRequest(this.provider, model)) {
+        if (this._requestFormat === "claude") {
+          headers["x-api-key"] = OPENCODE_PUBLIC_API_KEY;
+        } else {
+          headers["Authorization"] = `Bearer ${OPENCODE_PUBLIC_API_KEY}`;
+        }
+      }
     }
 
     if (this._requestFormat === "claude") {
@@ -749,8 +772,8 @@ export class OpencodeExecutor extends BaseExecutor {
             userAgent:
               process.env[envUAKey]?.trim() ||
               process.env.OPENCODE_USER_AGENT?.trim() ||
-              "opencode",
-            client: process.env.OPENCODE_CLIENT?.trim() || "desktop",
+              DEFAULT_OPENCODE_CLI_UA,
+            client: process.env.OPENCODE_CLIENT?.trim() || "cli",
             project: process.env.OPENCODE_PROJECT?.trim() || "global",
           };
         })()
@@ -777,18 +800,15 @@ export class OpencodeExecutor extends BaseExecutor {
     }
 
     // Muse's Responses endpoint rejects the short conversation fingerprint used
-    // by the Chat endpoint in practice. Keep the workaround scoped to Muse.
-    if (
-      this._requestFormat === "openai-responses" &&
-      model.startsWith("muse-spark") &&
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-        headers["x-opencode-session"] || ""
-      )
-    ) {
-      headers["x-opencode-session"] = randomUUID();
+    // by the Chat endpoint in practice. Keep the workaround scoped to Muse: hand
+    // it a fresh, gate-valid session id (all mirrors kept in sync).
+    if (this._requestFormat === "openai-responses" && model.startsWith("muse-spark")) {
+      const fresh = generateOpencodeSessionId(null);
+      headers["x-opencode-session"] = fresh;
+      headers["x-opencode-session-id"] = fresh;
+      headers["x-session-affinity"] = fresh;
+      headers["x-session-id"] = fresh;
     }
-
-    void model;
 
     return headers;
   }
@@ -908,6 +928,17 @@ export class OpencodeExecutor extends BaseExecutor {
     // placeholder for the affected model families.
     if (isThinkingMessageModel(model)) {
       modifiedBody = injectReasoningContentForThinkingModel(modifiedBody);
+    }
+    // OpenCode free-tier fingerprint (mirrors decolua/9router PR #4842): the
+    // upstream gate fingerprints the request body, so keyless `opencode` and
+    // every `-free` model need OpenCode's own read/shell tool declarations and
+    // must never carry tool_choice "none". Applied last so it operates on the
+    // final wire body. Non-free requests are untouched.
+    if (isOpencodeFreeTierRequest(this.provider, model)) {
+      const flat = this._requestFormat === "openai-responses";
+      this._toolRenames = applyFingerprintTools(modifiedBody, flat);
+    } else {
+      this._toolRenames = null;
     }
     return modifiedBody;
   }

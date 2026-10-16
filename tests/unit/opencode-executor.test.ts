@@ -245,10 +245,11 @@ describe("OpencodeExecutor", () => {
       assert.deepEqual(fetchCalls[0].options.headers, result.headers);
     });
 
-    it("omits authorization when credentials are missing", async () => {
+    it("sends the public bearer token when credentials are missing on a free model", async () => {
       const result = await zenExecutor.execute(createInput("minimax-m2.5-free", true, null));
 
       assert.deepEqual(result.headers, {
+        Authorization: "Bearer public",
         "Content-Type": "application/json",
         Accept: "text/event-stream",
       });
@@ -379,7 +380,7 @@ describe("OpencodeExecutor", () => {
       assert.equal(headers["x-opencode-session"], "sess-123");
     });
 
-    it("forwards all four x-opencode-* headers from clientHeaders", () => {
+    it("forwards the supported x-opencode-* headers from clientHeaders", () => {
       const headers = zenExecutor.buildHeaders({ apiKey: "test-key" }, true, {
         "x-opencode-session": "sess-abc",
         "x-opencode-request": "req-xyz",
@@ -387,7 +388,8 @@ describe("OpencodeExecutor", () => {
         "x-opencode-client": "tui",
       });
       assert.equal(headers["x-opencode-session"], "sess-abc");
-      assert.equal(headers["x-opencode-request"], "req-xyz");
+      // x-opencode-request is no longer forwarded (v2 gate rejects it).
+      assert.equal(headers["x-opencode-request"], undefined);
       assert.equal(headers["x-opencode-project"], "proj-5");
       assert.equal(headers["x-opencode-client"], "tui");
     });
@@ -414,7 +416,7 @@ describe("OpencodeExecutor", () => {
         "x-opencode-request": "req-xyz",
       });
       assert.equal(headers["x-opencode-session"], undefined);
-      assert.equal(headers["x-opencode-request"], "req-xyz");
+      assert.equal(headers["x-opencode-request"], undefined);
     });
 
     it("handles case-insensitive x-opencode-* key matching", () => {
@@ -423,7 +425,8 @@ describe("OpencodeExecutor", () => {
         "X-OPENCODE-REQUEST": "req-789",
       });
       assert.equal(headers["x-opencode-session"], "sess-456");
-      assert.equal(headers["x-opencode-request"], "req-789");
+      assert.equal(headers["x-opencode-session-id"], "sess-456");
+      assert.equal(headers["x-opencode-request"], undefined);
     });
 
     it("opencode-go executor also forwards x-opencode-* headers", () => {
@@ -510,41 +513,26 @@ describe("OpencodeExecutor", () => {
     });
   });
 
-  // #4465: custom-named providers reach the session-affinity fallback above, but the
-  // OpenCode CLI never emits x-opencode-request for them (it only emits x-opencode-*
-  // when the provider id starts with "opencode"). Synthesize a request correlation id
-  // so these users are not disadvantaged on the opencode.ai upstream. x-opencode-client
-  // / x-opencode-project are NOT fabricated: their valid values are opencode-internal
-  // and inventing them risks upstream rejection — they stay forward-only.
-  describe("opencode request-id synthesis for custom-named providers (#4465)", () => {
-    it("synthesizes x-opencode-request when only session-affinity is present", () => {
+  // OpenCode v2 (decolua/9router PR #4842) dropped x-opencode-request: the v2 CLI
+  // does not send it and the free-tier gate has rejected it. It is neither
+  // synthesized nor forwarded now. x-opencode-client / x-opencode-project are still
+  // NOT fabricated on the forward-only path: their valid values are opencode-internal
+  // and inventing them risks upstream rejection.
+  describe("x-opencode-request is not synthesized or forwarded (v2 gate)", () => {
+    it("does not synthesize x-opencode-request when only session-affinity is present", () => {
       const headers = zenExecutor.buildHeaders({ apiKey: "test-key" }, true, {
         "x-session-affinity": "sess-aff",
       });
       assert.equal(headers["x-opencode-session"], "sess-aff");
-      assert.ok(
-        typeof headers["x-opencode-request"] === "string" &&
-          headers["x-opencode-request"].length > 0,
-        "expected a synthesized x-opencode-request id"
-      );
+      assert.equal(headers["x-opencode-request"], undefined);
     });
 
-    it("synthesizes a unique x-opencode-request per call", () => {
-      const a = zenExecutor.buildHeaders({ apiKey: "k" }, true, {
-        "x-session-affinity": "sess-aff",
-      });
-      const b = zenExecutor.buildHeaders({ apiKey: "k" }, true, {
-        "x-session-affinity": "sess-aff",
-      });
-      assert.notEqual(a["x-opencode-request"], b["x-opencode-request"]);
-    });
-
-    it("prefers a client-sent x-opencode-request over the synthesized one", () => {
+    it("does not forward a client-sent x-opencode-request", () => {
       const headers = zenExecutor.buildHeaders({ apiKey: "test-key" }, true, {
         "x-session-affinity": "sess-aff",
         "x-opencode-request": "req-real",
       });
-      assert.equal(headers["x-opencode-request"], "req-real");
+      assert.equal(headers["x-opencode-request"], undefined);
     });
 
     it("does not fabricate x-opencode-client / x-opencode-project (no client source)", () => {
@@ -556,22 +544,17 @@ describe("OpencodeExecutor", () => {
     });
 
     it("does not synthesize x-opencode-request on the direct opencode-session path", () => {
-      // opencode CLI (provider id starts with "opencode") sends its own x-opencode-*
-      // set; we must not override/inject when it controls the request id itself.
       const headers = zenExecutor.buildHeaders({ apiKey: "test-key" }, true, {
         "x-opencode-session": "direct",
       });
       assert.equal(headers["x-opencode-request"], undefined);
     });
 
-    it("opencode-go executor also synthesizes x-opencode-request on the fallback path", () => {
+    it("opencode-go executor also omits x-opencode-request on the fallback path", () => {
       const headers = goExecutor.buildHeaders({ apiKey: "test-key" }, true, {
         "x-session-affinity": "sess-go-aff",
       });
-      assert.ok(
-        typeof headers["x-opencode-request"] === "string" &&
-          headers["x-opencode-request"].length > 0
-      );
+      assert.equal(headers["x-opencode-request"], undefined);
     });
   });
 
@@ -642,7 +625,7 @@ describe("DefaultExecutor", () => {
   });
 
   describe("buildHeaders", () => {
-    it("forwards x-opencode-* headers from clientHeaders", () => {
+    it("forwards the supported x-opencode-* headers from clientHeaders", () => {
       const headers = defaultExecutor.buildHeaders({ apiKey: "test-key" }, true, {
         "x-opencode-session": "sess-abc",
         "x-opencode-request": "req-xyz",
@@ -650,7 +633,8 @@ describe("DefaultExecutor", () => {
         "x-opencode-client": "tui",
       });
       assert.equal(headers["x-opencode-session"], "sess-abc");
-      assert.equal(headers["x-opencode-request"], "req-xyz");
+      // x-opencode-request is no longer forwarded (v2 gate).
+      assert.equal(headers["x-opencode-request"], undefined);
       assert.equal(headers["x-opencode-project"], "proj-5");
       assert.equal(headers["x-opencode-client"], "tui");
     });
