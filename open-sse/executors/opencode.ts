@@ -936,6 +936,17 @@ export class OpencodeExecutor extends BaseExecutor {
     // final wire body. Non-free requests are untouched.
     if (isOpencodeFreeTierRequest(this.provider, model)) {
       const flat = this._requestFormat === "openai-responses";
+      // The v2 gate rejects a NON-streaming free request with 403 FreeTierError
+      // regardless of the tool fingerprint, so the wire body must say
+      // `stream: true` even when the caller asked for JSON. chatCore marks the
+      // free tier `providerRequiresStreaming` and converts the upstream SSE back
+      // to a JSON response for non-streaming callers, but only the Accept header
+      // / response handling followed that flag — the body kept the client's
+      // `stream: false` and upstream still 403'd. Force it here on the final
+      // wire body (applies to both the chat and the Responses shapes).
+      if (modifiedBody && typeof modifiedBody === "object" && !Array.isArray(modifiedBody)) {
+        (modifiedBody as Record<string, unknown>).stream = true;
+      }
       this._toolRenames = applyFingerprintTools(modifiedBody, flat);
     } else {
       this._toolRenames = null;

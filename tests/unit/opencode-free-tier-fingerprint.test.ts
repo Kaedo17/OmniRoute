@@ -203,6 +203,46 @@ describe("OpencodeExecutor free-tier integration", () => {
     assert.equal(out.tools, undefined);
   });
 
+  // The v2 gate answers a non-streaming free request with 403 FreeTierError even
+  // when the tool fingerprint is correct, so the wire body must say stream:true
+  // regardless of the caller's flag. Regression for the live 403 observed on
+  // every oc/*-free model when a JSON (stream:false) client called OmniRoute.
+  it("forces stream:true on the wire body for a non-streaming free-tier request", () => {
+    const executor = new OpencodeExecutor("opencode");
+    const body = {
+      model: "deepseek-v4.1-flash-free",
+      stream: false,
+      messages: [{ role: "user", content: "hi" }],
+    };
+    const out = executor.transformRequest(
+      "deepseek-v4.1-flash-free",
+      body,
+      false,
+      {}
+    ) as JsonRecord;
+    assert.equal(out.stream, true);
+  });
+
+  it("forces stream:true on the flat Responses body too", () => {
+    const executor = new OpencodeExecutor("opencode");
+    (executor as unknown as { _requestFormat: string | null })._requestFormat = "openai-responses";
+    const body = { model: "muse-spark-1.2-contributor-free", stream: false, input: [] };
+    const out = executor.transformRequest(
+      "muse-spark-1.2-contributor-free",
+      body,
+      false,
+      {}
+    ) as JsonRecord;
+    assert.equal(out.stream, true);
+  });
+
+  it("keeps the caller's stream:false on the paid lane", () => {
+    const executor = new OpencodeExecutor("opencode-zen");
+    const body = { model: "glm-5.2", stream: false, messages: [{ role: "user", content: "hi" }] };
+    const out = executor.transformRequest("glm-5.2", body, false, {}) as JsonRecord;
+    assert.equal(out.stream, false);
+  });
+
   it("uses the flat tool shape for Responses-format free models", () => {
     const executor = new OpencodeExecutor("opencode");
     (executor as unknown as { _requestFormat: string | null })._requestFormat = "openai-responses";
