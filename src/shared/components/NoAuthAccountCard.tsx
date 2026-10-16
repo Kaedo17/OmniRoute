@@ -67,6 +67,17 @@ function getAccountProxies(conn: Connection | undefined): AccountProxyConfig[] {
   return (conn?.providerSpecificData?.accountProxies as AccountProxyConfig[]) || [];
 }
 
+/**
+ * The account/fingerprint ids stored on ONE connection row. Kept separate from
+ * the flattened display list so add/remove never write another row's ids back
+ * into this row (that cross-pollination duplicated every fingerprint and broke
+ * React keys — see the dedupe below).
+ */
+function ownAccountIds(conn: Connection | undefined, dataKey: string): string[] {
+  const ids = conn?.providerSpecificData?.[dataKey];
+  return Array.isArray(ids) ? ids.filter((v): v is string => typeof v === "string") : [];
+}
+
 function getEntryForFingerprint(proxies: AccountProxyConfig[], fp: string) {
   return proxies.find((p) => p.fingerprint === fp) ?? null;
 }
@@ -174,7 +185,10 @@ export default function NoAuthAccountCard({
     }
   }, [proxyAccountId]);
 
-  const allAccountIds = connections.flatMap((c) => c.providerSpecificData?.[dataKey] || []);
+  // Deduped union of every connection's ids: the same fingerprint may legitimately
+  // appear on more than one row (sibling providers share state), and duplicated
+  // ids produced duplicate React keys + an inflated account count.
+  const allAccountIds = [...new Set(connections.flatMap((c) => ownAccountIds(c, dataKey)))];
 
   const conn = connections[0];
   const accountProxies = getAccountProxies(conn);
@@ -200,7 +214,10 @@ export default function NoAuthAccountCard({
           throw new Error(errData?.error || t("createConnectionFailed"));
         }
       } else {
-        const updated = [...allAccountIds, accountId];
+        // Scope the write to THIS connection's own ids (deduped). Using the union
+        // across every connection copied sibling rows' fingerprints into this one
+        // and multiplied them on each add.
+        const updated = [...new Set([...ownAccountIds(conn, dataKey), accountId])];
         const res = await fetch(`/api/providers/${conn.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -218,7 +235,7 @@ export default function NoAuthAccountCard({
     }
   };
 
-   const handleAddManualApiKey = async () => {
+  const handleAddManualApiKey = async () => {
     if (!manualApiKey.trim()) return;
     setAddingManualKey(true);
     try {
@@ -236,11 +253,14 @@ export default function NoAuthAccountCard({
   };
 
   const handleRemoveAccount = async (accountId: string) => {
-    if (!conn) return;
-    const updated = allAccountIds.filter((id) => id !== accountId);
-    const updatedProxies = accountProxies.filter((p) => p.fingerprint !== accountId);
+    // Remove from the row that actually OWNS the fingerprint (the display list is
+    // a union across connections), not blindly from connections[0].
+    const owner = connections.find((c) => ownAccountIds(c, dataKey).includes(accountId)) ?? conn;
+    if (!owner) return;
+    const updated = ownAccountIds(owner, dataKey).filter((id) => id !== accountId);
+    const updatedProxies = getAccountProxies(owner).filter((p) => p.fingerprint !== accountId);
     try {
-      const res = await fetch(`/api/providers/${conn.id}`, {
+      const res = await fetch(`/api/providers/${owner.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
