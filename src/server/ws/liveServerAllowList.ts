@@ -14,7 +14,12 @@ const DEFAULT_HOST = "127.0.0.1";
 
 /**
  * Default origins allowed to open a WebSocket against the local dashboard.
- * These match the loopback HTTP listener at port 20128.
+ * These match the historical loopback HTTP listener at port 20128.
+ *
+ * NOTE: `buildAllowedOrigins()` additionally derives loopback origins for the
+ * CONFIGURED dashboard port (DASHBOARD_PORT / PORT / OMNIROUTE_PORT), so a
+ * custom `PORT` does not lock the dashboard out of its own LiveWS. This frozen
+ * constant stays 20128-only for backward compatibility and tests.
  */
 export const DEFAULT_ALLOWED_ORIGINS: readonly string[] = Object.freeze([
   "http://127.0.0.1:20128",
@@ -26,6 +31,40 @@ export const DEFAULT_ALLOWED_ORIGINS: readonly string[] = Object.freeze([
   // local-only posture as the entries above — it never refers to a LAN host.
   "http://0.0.0.0:20128",
 ]);
+
+/**
+ * Loopback host spellings a browser may use for the dashboard Origin header.
+ * `[::1]` keeps its brackets because that is how it appears in an Origin URL.
+ */
+const LOOPBACK_ORIGIN_HOSTS: readonly string[] = Object.freeze([
+  "127.0.0.1",
+  "localhost",
+  "0.0.0.0",
+  "[::1]",
+]);
+
+/**
+ * Port the dashboard is served on. Prefers the dashboard/HTTP port so a
+ * non-default `PORT` (e.g. 20129) is covered by the loopback allow-list —
+ * otherwise every LiveWS upgrade from the dashboard is rejected with
+ * FORBIDDEN_ORIGIN. Falls back to the historical default 20128.
+ */
+function resolveDashboardPort(env: NodeJS.ProcessEnv): string {
+  const raw = env.DASHBOARD_PORT || env.PORT || env.OMNIROUTE_PORT || "";
+  const trimmed = String(raw).trim();
+  return /^\d+$/.test(trimmed) ? trimmed : "20128";
+}
+
+/**
+ * Loopback origins for the resolved dashboard port. Returns [] for the default
+ * port (already covered by DEFAULT_ALLOWED_ORIGINS) so the set stays identical
+ * to the historical behaviour when PORT is unset/20128.
+ */
+function loopbackOriginsForPort(env: NodeJS.ProcessEnv): string[] {
+  const port = resolveDashboardPort(env);
+  if (port === "20128") return [];
+  return LOOPBACK_ORIGIN_HOSTS.map((host) => `http://${host}:${port}`);
+}
 
 /**
  * Parse a comma-separated env value into a set of trimmed, non-empty entries.
@@ -41,11 +80,12 @@ export function parseCsvEnv(value: string | undefined | null): Set<string> {
 }
 
 /**
- * Build the static origin allow-list from defaults + LIVE_WS_ALLOWED_ORIGINS.
+ * Build the static origin allow-list from defaults + the resolved dashboard
+ * port's loopback origins + LIVE_WS_ALLOWED_ORIGINS.
  */
 export function buildAllowedOrigins(env: NodeJS.ProcessEnv = process.env): Set<string> {
   const extra = parseCsvEnv(env.LIVE_WS_ALLOWED_ORIGINS);
-  return new Set([...DEFAULT_ALLOWED_ORIGINS, ...extra]);
+  return new Set([...DEFAULT_ALLOWED_ORIGINS, ...loopbackOriginsForPort(env), ...extra]);
 }
 
 /**

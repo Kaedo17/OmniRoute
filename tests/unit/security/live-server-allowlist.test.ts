@@ -68,6 +68,42 @@ describe("buildAllowedOrigins", () => {
   });
 });
 
+describe("buildAllowedOrigins — configured dashboard port", () => {
+  it("adds loopback origins for a non-default PORT (LiveWS on :20129)", () => {
+    const out = buildAllowedOrigins({ PORT: "20129" });
+    for (const origin of [
+      "http://127.0.0.1:20129",
+      "http://localhost:20129",
+      "http://0.0.0.0:20129",
+      "http://[::1]:20129",
+    ]) {
+      assert.equal(out.has(origin), true, origin);
+    }
+    // Historical defaults remain.
+    assert.equal(out.has("http://localhost:20128"), true);
+  });
+
+  it("prefers DASHBOARD_PORT over PORT", () => {
+    const out = buildAllowedOrigins({ PORT: "20129", DASHBOARD_PORT: "20200" });
+    assert.equal(out.has("http://localhost:20200"), true);
+    assert.equal(out.has("http://localhost:20129"), false);
+  });
+
+  it("stays 20128-only when the port is unset or invalid", () => {
+    for (const env of [EMPTY_ENV, { PORT: "" }, { PORT: "not-a-port" }]) {
+      const out = buildAllowedOrigins(env);
+      assert.deepEqual([...out].sort(), [...DEFAULT_ALLOWED_ORIGINS].sort());
+    }
+  });
+
+  it("accepts an Origin on the configured port and still blocks unknown hosts", () => {
+    const env = { PORT: "20129" };
+    assert.equal(isOriginAllowed("http://localhost:20129", env), true);
+    assert.equal(isOriginAllowed("http://127.0.0.1:20129", env), true);
+    assert.equal(isOriginAllowed("http://evil.example.com", env), false);
+  });
+});
+
 describe("buildAllowedHosts", () => {
   it("returns empty set when env is not set", () => {
     assert.equal(buildAllowedHosts(EMPTY_ENV).size, 0);
