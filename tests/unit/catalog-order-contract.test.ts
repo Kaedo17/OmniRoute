@@ -74,7 +74,8 @@ function countProviderBlocks(ownedBySequence: string[]): number {
 test("catalog /v1/models: exact provider-grouped order (blocks === distinct owned_by)", async () => {
   // Seed 3 providers with synced models to guarantee fragmentation if unsorted.
   // The static registry also emits models for active providers, so the catalog
-  // will contain rows from openai, anthropic, and opencode from multiple loops.
+  // will contain rows from openai, anthropic, and the OpenCode free pool from
+  // multiple loops.
   const conn1 = await seedConnection("openai");
   const conn2 = await seedConnection("anthropic");
   const conn3 = await seedConnection("opencode");
@@ -92,8 +93,12 @@ test("catalog /v1/models: exact provider-grouped order (blocks === distinct owne
     "opencode",
     (conn3 as { id: string }).id,
     [
-      { id: "kimi-k2", name: "Kimi K2" },
-      { id: "glm-4", name: "GLM-4" },
+      // These MUST be free ids. The `oc/` block is scoped to the free tier and regrouped
+      // under owned_by "omniroute" (sse/services/catalogOpencodeFreeTier.ts), so the paid
+      // ids this fixture used to seed (kimi-k2, glm-4) are dropped from the public catalog
+      // outright — leaving no third owner to assert on and nothing to group.
+      { id: "glm-4-free", name: "GLM-4 Free" },
+      { id: "deepseek-v4-flash-free", name: "DeepSeek V4 Flash Free" },
     ]
   );
 
@@ -108,7 +113,10 @@ test("catalog /v1/models: exact provider-grouped order (blocks === distinct owne
   const distinctOwnedBy = new Set(ownedByValues);
   assert.ok(distinctOwnedBy.has("openai"), "openai rows present");
   assert.ok(distinctOwnedBy.has("anthropic"), "anthropic rows present");
-  assert.ok(distinctOwnedBy.has("opencode"), "opencode rows present");
+  assert.ok(
+    distinctOwnedBy.has("omniroute"),
+    "opencode free-pool rows present under their omniroute owner"
+  );
 
   // Exact invariant: each provider appears in exactly one contiguous block
   const blockCount = countProviderBlocks(ownedByValues);
