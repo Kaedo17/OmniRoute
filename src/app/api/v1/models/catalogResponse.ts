@@ -26,6 +26,7 @@ import { buildFunctionalGatewayPredicate } from "./functionalGatewayPredicate";
 import { getPassthroughProviders, REGISTRY } from "@omniroute/open-sse/config/providerRegistry";
 import { hasEligibleConnectionForModel } from "@/domain/connectionModelRules";
 import { dedupeExactCatalogIds } from "./catalogDedupe";
+import { applyOpencodeFreeTierCatalog } from "@/sse/services/catalogOpencodeFreeTier";
 import { sortCatalogModelsProviderGrouped } from "./catalogOrder";
 import {
   disambiguateCatalogModelNames,
@@ -229,6 +230,13 @@ export async function applyCatalogPostFilters(
   // identity (id, type, subtype) so the intentional same-id audio transcription/speech
   // pair survives. Independent of MODELS_CATALOG_PREFIX_MODE; runs as the final guard.
   finalModels = dedupeExactCatalogIds(finalModels);
+
+  // Scope the OpenCode no-auth block to the operator's free-tier rule LAST, after every
+  // append/variant/dedupe pass above, so `oc/` rows minted by those passes (e.g. a
+  // no-thinking mirror) are scoped too rather than sneaking a paid id back in. Keeps only
+  // `oc/<model>` rows that are both on the base URL and free, and regroups them under
+  // `owned_by: "omniroute"`. Catalog-only — `oc/<model>` routing is untouched.
+  finalModels = applyOpencodeFreeTierCatalog(finalModels);
 
   return finalModels;
 }

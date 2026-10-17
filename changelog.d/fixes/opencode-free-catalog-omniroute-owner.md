@@ -1,0 +1,1 @@
+- `GET /v1/models`: scope the OpenCode no-auth `oc/` block to the free tier — keep only the models the base URL currently serves that are also free (10 when measured, down from 139 which included 122 paid ids plus 7 delisted free ids) and regroup them under `owned_by: "omniroute"`. Catalog-only: `oc/<model>` routing, credentials and dispatch are untouched.
