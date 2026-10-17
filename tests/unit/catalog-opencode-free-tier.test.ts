@@ -117,6 +117,67 @@ test("keeps a no-thinking mirror of a free model, under the omniroute owner", ()
   );
 });
 
+test("drops the canonical opencode/<model> mirror when its oc/ sibling is present", () => {
+  // Discovery makes the synced-models loop emit a canonical mirror beside each alias row
+  // (`parent: aliasId`), so the same free model was listed twice under two owner names.
+  const out = applyOpencodeFreeTierCatalogWithSources(
+    [
+      row("oc/glm-5.3-flash-free"),
+      row("opencode/glm-5.3-flash-free", "opencode"),
+      row("oc/beam-free"),
+      row("opencode/beam-free", "opencode"),
+    ],
+    sources()
+  );
+  assert.deepEqual(
+    out.map((m) => [m.id, m.owned_by]),
+    [
+      ["oc/glm-5.3-flash-free", OPENCODE_FREE_OWNER],
+      ["oc/beam-free", OPENCODE_FREE_OWNER],
+    ]
+  );
+});
+
+test("keeps a canonical row that has no oc/ sibling — it is not a mirror", () => {
+  const out = applyOpencodeFreeTierCatalogWithSources(
+    [row("opencode/some-standalone-model", "opencode")],
+    sources()
+  );
+  assert.deepEqual(
+    out.map((m) => [m.id, m.owned_by]),
+    [["opencode/some-standalone-model", "opencode"]]
+  );
+});
+
+test("drops the canonical mirror even when the alias row itself is filtered out", () => {
+  // A paid model's alias row is dropped by the free rule; its mirror must not survive
+  // as an orphan advertising the same paid id.
+  const out = applyOpencodeFreeTierCatalogWithSources(
+    [row("oc/claude-opus-5"), row("opencode/claude-opus-5", "opencode")],
+    sources()
+  );
+  assert.deepEqual(out, []);
+});
+
+test("leaves the separate keyed gateways opencode-zen/ and opencode-go/ alone", () => {
+  const out = applyOpencodeFreeTierCatalogWithSources(
+    [
+      row("opencode-zen/glm-5.3-flash-free", "opencode-zen"),
+      row("opencode-go/some-model", "opencode-go"),
+      row("oc/glm-5.3-flash-free"),
+    ],
+    sources()
+  );
+  assert.deepEqual(
+    out.map((m) => [m.id, m.owned_by]),
+    [
+      ["opencode-zen/glm-5.3-flash-free", "opencode-zen"],
+      ["opencode-go/some-model", "opencode-go"],
+      ["oc/glm-5.3-flash-free", OPENCODE_FREE_OWNER],
+    ]
+  );
+});
+
 test("an empty synced list degrades to the free rule instead of blanking the block", () => {
   // Fresh install: discovery has not run, so `available` is empty. Intersecting against
   // it would publish zero rows; the documented fallback keeps free ids visible.

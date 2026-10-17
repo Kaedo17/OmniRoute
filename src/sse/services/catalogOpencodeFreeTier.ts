@@ -15,6 +15,11 @@
  *   2. **owned_by "omniroute"** — the surviving rows are grouped under `omniroute` in
  *      `GET /v1/models` rather than under `opencode`, so the free pool reads as its own
  *      provider in every client that groups by `owned_by`.
+ *   3. **one row per model** — discovery makes the synced-models loop emit a canonical
+ *      `opencode/<model>` mirror beside each `oc/<model>` alias (it was absent while the
+ *      synced list was empty), so every free model was listed twice under two different
+ *      owner names. A canonical row whose `oc/` sibling is present is dropped; a canonical
+ *      row with no alias sibling is an independent entry and is left alone.
  *
  * The rule is applied to the alias AS A SEGMENT, not as a string prefix, so presentation
  * variants that wrap the alias (`no-think/oc/<model>`, minted by the no-thinking pass)
@@ -45,6 +50,13 @@ export const OPENCODE_NOAUTH_ALIAS = "oc";
 /** Routing alias prefix form: `oc/<model>`. */
 export const OPENCODE_NOAUTH_PREFIX = `${OPENCODE_NOAUTH_ALIAS}/`;
 
+/**
+ * The family's canonical provider id — the segment the synced-models loop uses when it
+ * emits a canonical mirror (`opencode/<model>`) alongside the alias row. Distinct from
+ * `opencode-zen` / `opencode-go`, which are separate keyed gateways this module never touches.
+ */
+export const OPENCODE_CANONICAL_ID = "opencode";
+
 /** Public owner identity the surviving free rows are regrouped under. */
 export const OPENCODE_FREE_OWNER = "omniroute";
 
@@ -59,22 +71,32 @@ export interface OpencodeFreeTierSources {
 }
 
 /**
- * Bare model id behind an `oc/<model>` row, or null when the row is not one.
+ * The OpenCode family ids a catalog row can carry, and which role it plays.
  *
- * Matches the alias as a PATH SEGMENT rather than as a string prefix, because the
- * catalog mints presentation variants that wrap the alias: the no-thinking pass emits
- * `no-think/oc/<model>` for every advertised `oc/` model. A prefix match would miss
- * those, leaving an orphaned `no-think/oc/<paid-model>` behind once its base row is
- * dropped. Scanning segments drops the variant together with the model it mirrors.
+ * - `role: "alias"` — the `oc/<model>` no-auth routing alias.
+ * - `role: "canonical"` — the `opencode/<model>` canonical id that the synced-models loop
+ *   emits as a MIRROR of an alias row (it sets `parent: aliasId`), not an independent entry.
+ *
+ * Matching is by PATH SEGMENT rather than string prefix because presentation wrappers
+ * insert segments in front: the no-thinking pass emits `no-think/oc/<model>` for every
+ * advertised `oc/` model. A prefix match would miss those, leaving an orphaned
+ * `no-think/oc/<paid-model>` behind once its base row is dropped.
  */
-function bareIdOf(row: CatalogRow): string | null {
+interface OpenCodeFamilyId {
+  role: "alias" | "canonical";
+  bare: string;
+}
+
+function openCodeFamilyIdOf(row: CatalogRow): OpenCodeFamilyId | null {
   const id = typeof row?.id === "string" ? row.id : "";
   if (!id) return null;
   const segments = id.split("/");
-  const at = segments.indexOf(OPENCODE_NOAUTH_ALIAS);
+  const aliasAt = segments.indexOf(OPENCODE_NOAUTH_ALIAS);
+  const at = aliasAt !== -1 ? aliasAt : segments.indexOf(OPENCODE_CANONICAL_ID);
   if (at === -1) return null;
   const bare = segments[at + 1] ?? "";
-  return bare.length > 0 ? bare : null;
+  if (bare.length === 0) return null;
+  return { role: aliasAt !== -1 ? "alias" : "canonical", bare };
 }
 
 /**
@@ -89,10 +111,17 @@ function onBaseUrl(bareId: string, available: ReadonlySet<string>): boolean {
 }
 
 /**
- * Drop non-free / delisted `oc/` rows and regroup the survivors under `omniroute`.
+ * Scope the OpenCode family rows to the free tier and regroup them under `omniroute`.
+ *
+ * - `oc/<model>` alias rows survive only when the model is free AND on the base URL, and are
+ *   relabelled `owned_by: "omniroute"`.
+ * - `opencode/<model>` canonical mirrors are DROPPED when their `oc/<model>` sibling is also
+ *   present: it is the same model under a second id, so keeping both advertised the free pool
+ *   twice — once under `omniroute`, once under `opencode`. A canonical row with no alias
+ *   sibling is an independent entry and passes through untouched.
  *
  * Pure: rows are copied, never mutated, so callers can compose and test it freely.
- * Non-`oc/` rows pass through untouched, in order.
+ * Unrelated rows pass through untouched, in order.
  */
 export function applyOpencodeFreeTierCatalogWithSources(
   models: CatalogRow[],
@@ -100,15 +129,28 @@ export function applyOpencodeFreeTierCatalogWithSources(
 ): CatalogRow[] {
   if (!Array.isArray(models) || models.length === 0) return models;
 
+  // Pass 1: which bare ids are represented by an `oc/` alias row? Membership in this set is
+  // what marks a canonical row as a redundant mirror rather than an independent entry.
+  const aliasSiblings = new Set<string>();
+  for (const row of models) {
+    const family = openCodeFamilyIdOf(row);
+    if (family?.role === "alias") aliasSiblings.add(family.bare);
+  }
+
   const kept: CatalogRow[] = [];
   for (const row of models) {
-    const bare = bareIdOf(row);
-    if (bare === null) {
+    const family = openCodeFamilyIdOf(row);
+    if (family === null) {
       kept.push(row);
       continue;
     }
-    if (!onBaseUrl(bare, sources.available)) continue;
-    if (sources.isPremium(bare)) continue;
+    if (family.role === "canonical") {
+      if (aliasSiblings.has(family.bare)) continue; // redundant mirror of an oc/ row
+      kept.push(row);
+      continue;
+    }
+    if (!onBaseUrl(family.bare, sources.available)) continue;
+    if (sources.isPremium(family.bare)) continue;
     kept.push({ ...row, owned_by: OPENCODE_FREE_OWNER });
   }
   return kept;
