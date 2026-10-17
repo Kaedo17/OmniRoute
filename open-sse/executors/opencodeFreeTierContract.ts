@@ -152,6 +152,14 @@ function deriveFreeIdsFromCatalog(): Set<string> | null {
     const free = new Set<string>();
     const pricing = getModelsDevPricing();
     const byProvider = pricing[OPENCODE_CATALOG_PROVIDER_IDS[0]] ?? pricing["opencode-zen"];
+    // Availability and pricing sync independently: `syncedAvailableModels` can be
+    // populated while `models_dev_pricing` is still empty (or holds nothing for the
+    // opencode family). An empty pricing map makes every available id fall through the
+    // loop below, yielding an EMPTY free set — which `isPremiumOpencodeModel` then reads
+    // as "everything is premium" and 402s the whole free tier. A missing pricing row is
+    // "unknown", not "paid", so fall back to the legacy heuristic exactly as when no
+    // catalog has been synced at all.
+    if (!byProvider || Object.keys(byProvider).length === 0) return null;
     for (const id of available) {
       const cost = byProvider?.[id];
       if (!cost || cost.input !== 0 || cost.output !== 0) continue;
