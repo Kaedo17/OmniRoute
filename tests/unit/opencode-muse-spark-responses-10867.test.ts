@@ -6,8 +6,12 @@ import { opencodeProvider } from "../../open-sse/config/providers/registry/openc
 // (/responses), not /chat/completions. Without targetFormat:"openai-responses"
 // these models fall through to the default chat/completions pass-through and the
 // upstream returns null/empty content.
-test("muse-spark-1.2 and muse-spark-1.2-contributor-free route to the Responses API", () => {
-  for (const id of ["muse-spark-1.2", "muse-spark-1.2-contributor-free"]) {
+test("muse-spark 1.2/1.3 route to the Responses API, not chat/completions", () => {
+  for (const id of [
+    "muse-spark-1.2",
+    "muse-spark-1.2-contributor-free",
+    "muse-spark-1.3-contributor-free",
+  ]) {
     const model = opencodeProvider.models.find((m) => m.id === id);
     assert.ok(model, `${id} should be registered in the opencode provider`);
     assert.equal(
