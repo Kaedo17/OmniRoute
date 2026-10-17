@@ -1330,9 +1330,27 @@ export class OpencodeExecutor extends BaseExecutor {
       ? this.resolveEffectiveKey(credentials) || credentials.accessToken
       : undefined;
 
+    // Free-tier scope, resolved before the auth lane because it SWITCHES that lane.
+    // Upstream gates the Zen free tier behind the attested anonymous identity rather
+    // than a subscription: a request carrying a real `oc_sk_*` connection key is
+    // answered 403 FreeTierError ("can only be used from within OpenCode"), while the
+    // same request carrying `Bearer public` plus a session id succeeds. Paid models on
+    // the same host are the inverse — they need the key. Since OmniRoute resolves
+    // credentials before dispatch, an operator who added a key for the paid models
+    // would otherwise route their FREE models down the keyed lane and 403 all of them.
+    //
+    // Only the `Authorization: Bearer` lane is switched. The two `x-api-key` lanes
+    // (Claude format, and openai-responses on the Zen host) are measured to REQUIRE the
+    // key (#12633), so they keep it even for a free model. Ported from
+    // decolua/9router#4784, narrowed accordingly.
+    const gatedScope =
+      Boolean(model) && isGatedFreeTierRequest(this._surface(), this.provider, model);
+
     if (key) {
       if (this._requestFormat === "claude" || this.usesZenApiKeyAuth()) {
         headers["x-api-key"] = key;
+      } else if (gatedScope) {
+        headers["Authorization"] = "Bearer public";
       } else {
         headers["Authorization"] = `Bearer ${key}`;
       }
@@ -1346,9 +1364,7 @@ export class OpencodeExecutor extends BaseExecutor {
     // body answers 403 FreeTierError), so a JSON client is served by streaming upstream and
     // rebuilding the JSON body from the event stream — the path chatCore already takes for
     // any buffered event-stream response. Announcing the stream here keeps that buffering an
-    // expected outcome rather than a warning.
-    const gatedScope =
-      Boolean(model) && isGatedFreeTierRequest(this._surface(), this.provider, model);
+    // expected outcome rather than a warning. (`gatedScope` is resolved above, by the auth lane.)
     if (stream || gatedScope) {
       headers["Accept"] = "text/event-stream";
     }
