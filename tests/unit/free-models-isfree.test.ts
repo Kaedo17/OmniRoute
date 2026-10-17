@@ -63,3 +63,39 @@ describe("isFreeModel isFree opt-in", () => {
     assert.equal(freeFilterEmpty, true);
   });
 });
+
+describe("isFreeModel honours the hyphenated -free id suffix", () => {
+  // Regression guard: OpenCode marks free models with `-free` (not OpenRouter's `:free`)
+  // and its /models payload carries only `{ id, name }` — no pricing, no `free` flag, no
+  // tags. `hasPayloadFreeEvidence` therefore returned false for every one of them, so the
+  // free-only sync imported 1 of 10 free models (only the catalogued `big-pickle`) and the
+  // synced availability list needed to scope the `oc/` catalog ended up incomplete.
+  it("accepts a bare { id, name } -free payload on a provider with a documented free tier", () => {
+    assert.equal(providerHasFreeModels("opencode"), true, "precondition");
+    assert.equal(
+      isFreeModel("opencode", { id: "glm-5.3-flash-free", name: "glm-5.3-flash-free" }),
+      true
+    );
+    assert.equal(isFreeModel("oc", { id: "beam-free" }), true, "alias resolves to opencode");
+    assert.equal(isFreeModel("opencode", { id: "space-bunny-free" }), true);
+  });
+
+  it("rejects paid opencode ids even when they belong to the same payload", () => {
+    assert.equal(isFreeModel("opencode", { id: "claude-opus-5", name: "claude-opus-5" }), false);
+    assert.equal(isFreeModel("opencode", { id: "gpt-5.6-luna" }), false);
+    assert.equal(isFreeModel("opencode", { id: "test" }), false);
+  });
+
+  it("does NOT grant free access on a provider without a documented free tier", () => {
+    // opencode-go has no free tier — the suffix alone must not override that.
+    assert.equal(providerHasFreeModels("opencode-go"), false, "precondition");
+    assert.equal(isFreeModel("opencode-go", { id: "glm-5.3-flash-free" }), false);
+    assert.equal(isFreeModel("local", { id: "some-model-free" }), false);
+    assert.equal(isFreeModel("any", { id: "some-model-free" }), false);
+  });
+
+  it("requires a model name before the suffix", () => {
+    assert.equal(isFreeModel("opencode", { id: "-free" }), false, "suffix alone is not an id");
+    assert.equal(isFreeModel("opencode", { id: "" }), false);
+  });
+});

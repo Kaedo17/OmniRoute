@@ -31,7 +31,7 @@ import { AI_MODELS } from "@/shared/constants/models";
  *
  * A provider is considered to "have free models" when it appears in the
  * documented free-tier catalog (`FREE_MODEL_BUDGETS`). A single model is considered free when — for a provider with a documented
- * free tier — its id carries the OpenRouter-style `:free` suffix or both its
+ * free tier — its id carries the `:free` or `-free` suffix, or both its
  * prompt and completion prices are zero (guarded heuristics), or when its id
  * is listed as a free model for that provider in the shipped catalog.
  *
@@ -90,12 +90,29 @@ export function isCatalogFreeModel(provider: string, modelId: unknown): boolean 
 }
 
 /**
+ * OpenCode-style hyphenated free-tier id suffix: `glm-5.3-flash-free`.
+ *
+ * Several free-tier gateways mark free models with `-free` rather than the OpenRouter
+ * `:free` form that `hasPayloadFreeEvidence` recognises. Those upstreams return only
+ * `{ id, name }` — no pricing, no `free` flag, no tags — so without this rule the
+ * free-only import path rejected every one of them (measured: 9 of OpenCode's 10 free
+ * models dropped, only the catalogued `big-pickle` surviving).
+ *
+ * Gated on a documented free tier, same as the payload heuristics, so a coincidental
+ * `-free` on a provider with no free tier is never mistaken for free.
+ */
+function hasHyphenFreeIdSuffix(id: string | undefined): boolean {
+  return typeof id === "string" && id.endsWith("-free") && id.length > "-free".length;
+}
+
+/**
  * Whether a single fetched model qualifies as free for the given provider (id or alias): a
- * shipped-catalog entry, or a payload signal on a provider with a documented free tier.
+ * shipped-catalog entry, or a payload/id signal on a provider with a documented free tier.
  */
 export function isFreeModel(provider: string, model: FreeModelCandidate): boolean {
   if (isCatalogFreeModel(provider, model.id)) return true;
-  return providerHasFreeModels(provider) && hasPayloadFreeEvidence(model);
+  if (!providerHasFreeModels(provider)) return false;
+  return hasHyphenFreeIdSuffix(model.id) || hasPayloadFreeEvidence(model);
 }
 
 /** Reusable free predicate for fetched payloads — provider must have a documented free tier. */
