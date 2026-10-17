@@ -10,9 +10,10 @@
  * Group key = owned_by (the public owner identity), NOT the model-id prefix.
  * Built-in providers use their canonical id as owned_by; compatible nodes use the
  * configured node prefix. A single routable public prefix can differ from its owner:
- * no-auth OpenCode publishes `oc/<model>` while retaining owned_by "opencode".
- * Grouping by the prefix would split one provider's models; grouping by owned_by
- * keeps them contiguous.
+ * no-auth OpenCode publishes `oc/<model>` under owned_by "omniroute" rather than the
+ * alias or the canonical provider id. Grouping by the prefix would file the same
+ * models under a different identity than the owner the rest of the pipeline uses;
+ * grouping by owned_by keeps them contiguous.
  *
  * Order: combo block (owned_by === "combo") pinned first, preserving #4164; then
  * providers in registry precedence (OAUTH -> NOAUTH -> APIKEY canonical keys); then
