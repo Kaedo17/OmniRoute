@@ -771,6 +771,39 @@ of your shell history. → [CLI Integrations](docs/guides/CLI-INTEGRATIONS.md)
 
 <br/>
 
+### 🍴 Installing this fork
+
+The npm package and the Docker image are published from **upstream** (`diegosouzapw`) and do not
+contain fork-only fixes. To install _this fork_ — including the OpenCode free-tier `oc/` catalog
+work on `fix/opencode-free-tier-keyed-lane` — use the bundled installers instead. They pin the
+correct branch (the fork's default branch is an older line), gate on the required Node version
+(`>=22.22.2 <23 || >=24 <27`), generate `.env` secrets, and are safe to re-run for updates.
+
+**Linux / macOS / WSL / Git Bash**
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Kaedo17/OmniRoute/fix/opencode-free-tier-keyed-lane/scripts/ops/install-fork.sh)
+```
+
+**Windows PowerShell**
+
+```powershell
+irm https://raw.githubusercontent.com/Kaedo17/OmniRoute/fix/opencode-free-tier-keyed-lane/scripts/ops/install-fork.ps1 -OutFile install-fork.ps1
+./install-fork.ps1
+```
+
+Flags on both: `--dev` / `-Dev` (skip the production build), `--dir PATH` / `-Dir PATH`
+(install location), `--branch NAME` / `-Branch NAME` (different branch). After the build:
+`cd ~/OmniRoute && npm start`, then open `http://localhost:20128` and log in with the
+`INITIAL_PASSWORD` the script generated. Connect a provider and copy an API key from
+**Dashboard → Endpoints**; client tools point at `http://localhost:20128/v1`.
+
+> Serving other devices on your network? Set `REQUIRE_API_KEY=true` in `.env` and hand out
+> keys from **Dashboard → Endpoints** — the default listens on `0.0.0.0`, so an open LAN port
+> without auth lets anyone spend your provider quota.
+
+<br/>
+
 <div align="center">
 
 ### 🧩 New: OmniRoute inside VS Code's native Copilot Chat
