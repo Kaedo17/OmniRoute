@@ -116,6 +116,31 @@ export function pickAccount<T extends RotatableAccount>(
   return accounts[fallbackIdx];
 }
 
+/**
+ * Stable-partition direct-egress members ahead of proxied ones, in place.
+ *
+ * Measured (2026-10-18): OpenCode's free tier answers the exact same request
+ * with 403 FreeTierError when it egresses through a relay proxy (vercel/
+ * workers relay) and 200 through a direct account. Gated free-tier requests
+ * therefore prefer direct accounts whenever one exists and only fall back to
+ * relayed egresses when none are ready. The partition is stable (relative
+ * order inside each tier is kept) so the shared rotation cursor keeps its
+ * meaning across requests once the array has been remapped; a no-op when one
+ * of the tiers is empty (nothing to prefer).
+ *
+ * Ungated (premium/keyed) requests keep the plain rotation order — relays
+ * there are a legitimate egress choice, not a broken identity.
+ */
+export function preferDirectEgress<T extends { proxy: { host: string; port: number } | null }>(
+  accounts: T[]
+): T[] {
+  const direct = accounts.filter((a) => a.proxy === null);
+  const proxied = accounts.filter((a) => a.proxy !== null);
+  if (direct.length === 0 || proxied.length === 0) return accounts;
+  accounts.splice(0, accounts.length, ...direct, ...proxied);
+  return accounts;
+}
+
 /** Key derivation for the refusal store, injectable for pool-served members. */
 export type RotationEgressKeyOf = (account: RotatableAccount) => string | null;
 

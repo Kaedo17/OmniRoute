@@ -40,6 +40,7 @@ import {
   type RotationAccountSnapshot,
   pickAccount as pickRotatableAccount,
   maskAccountId,
+  preferDirectEgress,
   isNetworkErrorRotatable,
   isEmptyUpstreamRejection,
   extractChatcmplId,
@@ -580,6 +581,18 @@ export class OpencodeExecutor extends BaseExecutor {
       const accounts = listForRequest(input.body, this.accountHealth, input.credentials);
       if (accounts.length === 1 && accounts[0]?.fingerprint === "") this.nextAccountIdx = 0;
       else if (this.nextAccountIdx >= accounts.length) this.nextAccountIdx = 0;
+      // Gated free-tier ordering: relays are refused with 403 FreeTierError
+      // while the identical request through a direct account succeeds
+      // (measured 2026-10-18, see preferDirectEgress). Remap the request list
+      // direct-first so a gated pick lands on a direct egress whenever one
+      // exists; premium/keyed requests keep the plain rotation order.
+      if (
+        Boolean(input.model) &&
+        isGatedFreeTierRequest(this._surface(), this.provider, String(input.model ?? "")) &&
+        accounts.length > 1
+      ) {
+        preferDirectEgress(accounts);
+      }
       const { log } = input;
       // Request-scoped attribution prefix for rotation logs: message head,
       // empty when absent (never n/a/none/fabricated). The existing motif
