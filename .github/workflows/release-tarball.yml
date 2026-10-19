@@ -119,6 +119,10 @@ jobs:
         # peaking exceeds 16 GB hosted runners on this Next 16.3.x line.
         env:
           OMNIROUTE_USE_TURBOPACK: "0"
+          # This fork's release line is its default branch (fix/opencode-free-tier-keyed-lane),
+          # not upstream's release/* tips — provenance check #10427 calls for an
+          # explicit canary ack to ship from it.
+          OMNIROUTE_ALLOW_CANARY_BUILD: "1"
         run: npm run build:release
 
       - name: Validate pack artifact
