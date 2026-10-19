@@ -792,6 +792,24 @@ irm https://raw.githubusercontent.com/Kaedo17/OmniRoute/fix/opencode-free-tier-k
 ./install-fork.ps1
 ```
 
+**Prebuilt tarball (RPM-style: download and install, nothing builds on your machine)**
+
+Every tagged release ships a fully-prebuilt npm tarball — the Next.js standalone server, CLI,
+MCP server and native-module fixers are already compiled inside it — as
+`omniroute-<version>.tgz` on that tag's GitHub Release
+([Releases page](https://github.com/Kaedo17/OmniRoute/releases)):
+
+```bash
+# download omniroute-<version>.tgz from the Releases page, then:
+npm install -g ./omniroute-<version>.tgz
+omniroute                    # runs anywhere; data lands in ~/.omniroute
+omniroute uninstall --full   # symmetric removal (stops server, wipes data, removes the package)
+```
+
+Plain `omniroute uninstall` (without `--full`) keeps `~/.omniroute` for reinstall, and
+`npm uninstall -g omniroute` runs the same uninstaller automatically via the npm
+`uninstall` lifecycle hook.
+
 Flags on both: `--dev` / `-Dev` (skip the production build), `--dir PATH` / `-Dir PATH`
 (install location), `--branch NAME` / `-Branch NAME` (different branch). After the build:
 `cd ~/OmniRoute && npm start`, then open `http://localhost:20128` and log in with the

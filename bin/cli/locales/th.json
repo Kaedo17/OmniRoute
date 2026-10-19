@@ -346,6 +346,11 @@
     "installing": "กำลังติดตั้ง {latest}...",
     "done": "อัปเดตเป็น {latest} แล้ว โปรดรีสตาร์ตเซิร์ฟเวอร์เพื่อให้การเปลี่ยนแปลงมีผล"
   },
+  "uninstall": {
+    "description": "__MISSING__:Uninstall OmniRoute: stop the server, remove the global npm package (keeps data unless --full)",
+    "fullFlag": "__MISSING__:Also erase all OmniRoute data, including the database and encrypted credentials",
+    "stopFailed": "__MISSING__:Warning: failed to stop the running server (exit {code}); continuing uninstall anyway."
+  },
   "mcp": {
     "title": "เซิร์ฟเวอร์ MCP",
     "running": "เซิร์ฟเวอร์ MCP กำลังทำงาน ({transport})",

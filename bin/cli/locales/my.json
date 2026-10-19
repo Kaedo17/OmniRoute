@@ -346,6 +346,11 @@
     "installing": "{latest} ကို ထည့်သွင်းနေသည်...",
     "done": "{latest} သို့ အပ်ဒိတ်လုပ်ပြီးပါပြီ။ အသုံးပြုနိုင်ရန် ဆာဗာကို ပြန်လည်စတင်ပါ။"
   },
+  "uninstall": {
+    "description": "__MISSING__:Uninstall OmniRoute: stop the server, remove the global npm package (keeps data unless --full)",
+    "fullFlag": "__MISSING__:Also erase all OmniRoute data, including the database and encrypted credentials",
+    "stopFailed": "__MISSING__:Warning: failed to stop the running server (exit {code}); continuing uninstall anyway."
+  },
   "mcp": {
     "title": "MCP ဆာဗာ",
     "running": "MCP ဆာဗာ လည်ပတ်နေသည် ({transport})",

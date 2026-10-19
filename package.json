@@ -25,6 +25,7 @@
     "config/i18n.json",
     ".npmrc",
     "scripts/build/postinstall.mjs",
+    "scripts/build/uninstall.mjs",
     "scripts/build/betterSqlitePrebuildTarget.mjs",
     "scripts/build/fixPlaywrightAndroid.mjs",
     "bin/cli/runtime/",

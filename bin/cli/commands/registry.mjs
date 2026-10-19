@@ -86,6 +86,7 @@ import { registerApiCommands } from "../api-commands/registry.mjs";
 import { registerPlugin } from "./plugin.mjs";
 import { registerRadar } from "./radar.mjs";
 import { registerPacks } from "./packs.mjs";
+import { registerUninstall } from "./uninstall.mjs";
 
 export function registerCommands(program) {
   registerMemory(program);
@@ -177,4 +178,5 @@ export function registerCommands(program) {
   registerPlugin(program);
   registerRadar(program);
   registerPacks(program);
+  registerUninstall(program);
 }

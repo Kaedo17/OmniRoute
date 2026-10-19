@@ -346,6 +346,11 @@
     "installing": "Nameščanje različice {latest} ...",
     "done": "Posodobljeno na {latest}. Za uveljavitev znova zaženite strežnik."
   },
+  "uninstall": {
+    "description": "__MISSING__:Uninstall OmniRoute: stop the server, remove the global npm package (keeps data unless --full)",
+    "fullFlag": "__MISSING__:Also erase all OmniRoute data, including the database and encrypted credentials",
+    "stopFailed": "__MISSING__:Warning: failed to stop the running server (exit {code}); continuing uninstall anyway."
+  },
   "mcp": {
     "title": "Strežnik MCP",
     "running": "Strežnik MCP deluje ({transport})",

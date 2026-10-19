@@ -346,6 +346,11 @@
     "installing": "{latest} நிறுவப்படுகிறது...",
     "done": "{latest} க்குப் புதுப்பிக்கப்பட்டது. பயன்படுத்த சேவையகத்தை மறுதொடக்கம் செய்யவும்."
   },
+  "uninstall": {
+    "description": "__MISSING__:Uninstall OmniRoute: stop the server, remove the global npm package (keeps data unless --full)",
+    "fullFlag": "__MISSING__:Also erase all OmniRoute data, including the database and encrypted credentials",
+    "stopFailed": "__MISSING__:Warning: failed to stop the running server (exit {code}); continuing uninstall anyway."
+  },
   "mcp": {
     "title": "MCP சேவையகம்",
     "running": "MCP சேவையகம் இயங்குகிறது ({transport})",
