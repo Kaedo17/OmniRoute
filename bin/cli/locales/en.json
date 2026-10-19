@@ -346,6 +346,11 @@
     "installing": "Installing {latest}...",
     "done": "Updated to {latest}. Restart the server to apply."
   },
+  "uninstall": {
+    "description": "Uninstall OmniRoute: stop the server, remove the global npm package (keeps data unless --full)",
+    "fullFlag": "Also erase all OmniRoute data, including the database and encrypted credentials",
+    "stopFailed": "Warning: failed to stop the running server (exit {code}); continuing uninstall anyway."
+  },
   "mcp": {
     "title": "MCP Server",
     "running": "MCP server running ({transport})",

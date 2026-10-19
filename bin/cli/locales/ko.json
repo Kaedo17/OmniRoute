@@ -346,6 +346,11 @@
     "installing": "{latest} 설치 중...",
     "done": "{latest}(으)로 업데이트되었습니다. 적용하려면 서버를 다시 시작하세요."
   },
+  "uninstall": {
+    "description": "__MISSING__:Uninstall OmniRoute: stop the server, remove the global npm package (keeps data unless --full)",
+    "fullFlag": "__MISSING__:Also erase all OmniRoute data, including the database and encrypted credentials",
+    "stopFailed": "__MISSING__:Warning: failed to stop the running server (exit {code}); continuing uninstall anyway."
+  },
   "mcp": {
     "title": "MCP 서버",
     "running": "MCP 서버 실행 중({transport})",

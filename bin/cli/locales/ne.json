@@ -346,6 +346,11 @@
     "installing": "{latest} स्थापना हुँदैछ...",
     "done": "{latest} मा अपडेट गरियो। लागू गर्न सर्भर पुनः सुरु गर्नुहोस्।"
   },
+  "uninstall": {
+    "description": "__MISSING__:Uninstall OmniRoute: stop the server, remove the global npm package (keeps data unless --full)",
+    "fullFlag": "__MISSING__:Also erase all OmniRoute data, including the database and encrypted credentials",
+    "stopFailed": "__MISSING__:Warning: failed to stop the running server (exit {code}); continuing uninstall anyway."
+  },
   "mcp": {
     "title": "MCP सर्भर",
     "running": "MCP सर्भर चलिरहेको छ ({transport})",

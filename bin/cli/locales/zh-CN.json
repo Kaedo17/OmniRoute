@@ -346,6 +346,11 @@
     "installing": "正在安装 {latest}...",
     "done": "已更新至 {latest}。重启服务器以生效。"
   },
+  "uninstall": {
+    "description": "__MISSING__:Uninstall OmniRoute: stop the server, remove the global npm package (keeps data unless --full)",
+    "fullFlag": "__MISSING__:Also erase all OmniRoute data, including the database and encrypted credentials",
+    "stopFailed": "__MISSING__:Warning: failed to stop the running server (exit {code}); continuing uninstall anyway."
+  },
   "mcp": {
     "title": "MCP 服务器",
     "running": "MCP 服务器正在运行（{transport}）",

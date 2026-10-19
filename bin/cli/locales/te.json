@@ -346,6 +346,11 @@
     "installing": "{latest}ను ఇన్స్టాల్ చేస్తోంది...",
     "done": "{latest}కు అప్డేట్ చేయబడింది. వర్తింపజేయడానికి సర్వర్ను పునఃప్రారంభించండి."
   },
+  "uninstall": {
+    "description": "__MISSING__:Uninstall OmniRoute: stop the server, remove the global npm package (keeps data unless --full)",
+    "fullFlag": "__MISSING__:Also erase all OmniRoute data, including the database and encrypted credentials",
+    "stopFailed": "__MISSING__:Warning: failed to stop the running server (exit {code}); continuing uninstall anyway."
+  },
   "mcp": {
     "title": "MCP సర్వర్",
     "running": "MCP సర్వర్ రన్ అవుతోంది ({transport})",

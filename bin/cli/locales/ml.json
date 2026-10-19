@@ -346,6 +346,11 @@
     "installing": "{latest} ഇൻസ്റ്റാൾ ചെയ്യുന്നു...",
     "done": "{latest}-ലേക്ക് അപ്ഡേറ്റ് ചെയ്തു. പ്രയോഗിക്കാൻ സെർവർ പുനരാരംഭിക്കുക."
   },
+  "uninstall": {
+    "description": "__MISSING__:Uninstall OmniRoute: stop the server, remove the global npm package (keeps data unless --full)",
+    "fullFlag": "__MISSING__:Also erase all OmniRoute data, including the database and encrypted credentials",
+    "stopFailed": "__MISSING__:Warning: failed to stop the running server (exit {code}); continuing uninstall anyway."
+  },
   "mcp": {
     "title": "MCP സെർവർ",
     "running": "MCP സെർവർ പ്രവർത്തിക്കുന്നു ({transport})",

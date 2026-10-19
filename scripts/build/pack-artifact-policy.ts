@@ -167,6 +167,9 @@ export const PACK_ARTIFACT_ROOT_ALLOWED_EXACT_PATHS: string[] = [
   "scripts/build/native-binary-compat.mjs",
   "scripts/build/wreqJsNative.mjs",
   "scripts/build/postinstall.mjs",
+  // Spawned at runtime by bin/cli/commands/uninstall.mjs (omniroute uninstall)
+  // and executed by the package.json "uninstall" lifecycle hook.
+  "scripts/build/uninstall.mjs",
   // Imported by scripts/build/postinstall.mjs to pick the better-sqlite3 prebuild target.
   "scripts/build/betterSqlitePrebuildTarget.mjs",
   "scripts/build/postinstallSupport.mjs",

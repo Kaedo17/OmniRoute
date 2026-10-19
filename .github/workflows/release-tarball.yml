@@ -1,0 +1,162 @@
+name: Release prebuilt tarball
+
+# RPM-style distribution for users who do not consume the npm registry:
+# on a `v*` tag this workflow builds the fully-prebuilt package (Next.js
+# standalone + bundled CLI/MCP/workers), packs the npm tarball, validates it,
+# and attaches `omniroute-<version>.tgz` to the matching GitHub Release.
+# Users then run:
+#   npm install -g ./omniroute-<version>.tgz
+# without ever building anything on their machine.
+
+on:
+  push:
+    tags:
+      - "v*"
+  # A dispatch builds the ref it is dispatched ON (`gh workflow run … --ref v3.8.52`
+  # rebuilds that tag). The ref is deliberately NOT an input: CodeQL flags an
+  # input-controlled checkout next to the npm cache on the default branch as
+  # cache poisoning (actions/cache-poisoning/poisonable-step), and `github.ref`
+  # is trusted.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g., v3.8.52)"
+        required: true
+        type: string
+
+# Least-privilege default: read-only at the top level; the upload job grants
+# contents:write for the GitHub Release asset (Scorecard TokenPermissions).
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  validate:
+    name: Validate version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.validate.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Validate version format
+        id: validate
+        env:
+          # Pass workflow context via env (never interpolate ${{ ... }} straight
+          # into the run: script body) — zizmor template-injection mitigation.
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+          else
+            VERSION="$INPUT_VERSION"
+          fi
+
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?$ ]]; then
+            echo "Error: Invalid version format. Expected: v3.8.52"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "✓ Valid version: $VERSION"
+
+  tarball:
+    name: Build prebuilt tarball
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # gh release create/upload (attach the tarball asset)
+    outputs:
+      tarball: ${{ steps.pack.outputs.tarball }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Assert tag matches package.json version
+        env:
+          EXPECTED_VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          set -euo pipefail
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [[ "v$PKG_VERSION" != "$EXPECTED_VERSION" ]]; then
+            echo "::error::Tag $EXPECTED_VERSION does not match package.json version $PKG_VERSION"
+            exit 1
+          fi
+          echo "✓ package.json at $PKG_VERSION matches tag"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build prebuilt package
+        run: npm run build:release
+
+      - name: Validate pack artifact
+        run: npm run check:pack-artifact
+
+      - name: Pack tarball
+        id: pack
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          set -euo pipefail
+          npm pack
+          TARBALL="omniroute-${VERSION#v}.tgz"
+          [[ -f "$TARBALL" ]] || { echo "::error::Expected tarball $TARBALL not produced"; ls -la; exit 1; }
+          echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
+          echo "✓ Packed $TARBALL"
+
+      - name: Boot-check the packed tarball
+        run: npm run check:pack-boot
+
+      - name: Upload tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.pack.outputs.tarball }}
+          path: ${{ steps.pack.outputs.tarball }}
+          if-no-files-found: error
+
+  release:
+    name: Attach tarball to GitHub Release
+    needs: [validate, tarball]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create release / upload asset
+    steps:
+      - name: Download tarball
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.tarball.outputs.tarball }}
+
+      - name: Attach to release
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARBALL: ${{ needs.tarball.outputs.tarball }}
+        run: |
+          set -euo pipefail
+          # Create the release only if it does not exist yet (tag push usually
+          # arrives before the release page is published); then upload with
+          # --clobber so re-runs replace the asset instead of failing.
+          gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create "$VERSION" --repo "$GITHUB_REPOSITORY" \
+                 --title "OmniRoute $VERSION" \
+                 --notes "Prebuilt npm tarball: \`npm install -g ./$TARBALL\`"
+          gh release upload "$VERSION" "$TARBALL" --repo "$GITHUB_REPOSITORY" --clobber
+          echo "✅ Attached $TARBALL to release $VERSION"

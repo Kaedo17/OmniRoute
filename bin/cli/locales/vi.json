@@ -346,6 +346,11 @@
     "installing": "Đang cài đặt {latest}...",
     "done": "Đã cập nhật lên {latest}. Khởi động lại máy chủ để áp dụng."
   },
+  "uninstall": {
+    "description": "__MISSING__:Uninstall OmniRoute: stop the server, remove the global npm package (keeps data unless --full)",
+    "fullFlag": "__MISSING__:Also erase all OmniRoute data, including the database and encrypted credentials",
+    "stopFailed": "__MISSING__:Warning: failed to stop the running server (exit {code}); continuing uninstall anyway."
+  },
   "mcp": {
     "title": "Máy chủ MCP",
     "running": "Máy chủ MCP đang chạy ({transport})",
