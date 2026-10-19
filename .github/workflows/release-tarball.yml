@@ -72,7 +72,10 @@ jobs:
   tarball:
     name: Build prebuilt tarball
     needs: validate
-    runs-on: ubuntu-latest
+    # Pinned ubuntu-24.04: `ubuntu-latest` began migrating to Ubuntu 26 on
+    # 2026-10-19 (see runner-images#14748); pinned labels outlive label
+    # migrations, and the build is memory/timing sensitive on shared runners.
+    runs-on: ubuntu-24.04
     permissions:
       contents: write # gh release create/upload (attach the tarball asset)
     outputs:
@@ -135,7 +138,7 @@ jobs:
   release:
     name: Attach tarball to GitHub Release
     needs: [validate, tarball]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write # create release / upload asset
     steps:
