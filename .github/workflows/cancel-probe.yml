@@ -1,0 +1,41 @@
+name: cancel-probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  light: # cheap job, should finish in ~2 min if nothing cancels it
+    name: Light probe (sleep + memory check)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Sleep, uptime, memory pressure
+        run: |
+          free -h
+          sleep 45
+          echo "✅ Survived 45s — variance threshold: nothing exercising run-cancellation"
+
+  # Mirrors the failing step's resource envelope in miniature: npm install of
+  # the lockfile tree (~7GB workspace install) without running next build.
+  heavy-install:
+    name: Heavy npm ci probe
+    needs: light
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: npm ci (uncached, timed)
+        run: timeout 25m npm ci --no-audit --no-fund 2>&1 | tail -5
+      - run: echo "✅ npm ci completed"
