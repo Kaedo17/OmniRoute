@@ -76,6 +76,11 @@ jobs:
     # 2026-10-19 (see runner-images#14748); pinned labels outlive label
     # migrations, and the build is memory/timing sensitive on shared runners.
     runs-on: ubuntu-24.04
+    # Explicit ceiling ABOVE the expected ~25-35 min build: an unset job
+    # inherits the account/org default, and docs already record runs dying as
+    # "job-timeout cancelled" when a default was lower than the work
+    # (ci.yml:1094 — release-tip runs died at exactly 10m, 2026-07-15/16).
+    timeout-minutes: 75
     permissions:
       contents: write # gh release create/upload (attach the tarball asset)
     outputs:
@@ -104,8 +109,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+      - name: Install dependencies (cache + retry)
+        uses: ./.github/actions/npm-ci-retry
 
       - name: Build prebuilt package
         run: npm run build:release
