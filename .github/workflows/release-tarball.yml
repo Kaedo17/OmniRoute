@@ -113,6 +113,12 @@ jobs:
         uses: ./.github/actions/npm-ci-retry
 
       - name: Build prebuilt package
+        # OMNIROUTE_USE_TURBOPACK=0 — documented fallback for RAM-constrained
+        # builders (docs/reference/ENVIRONMENT.md, #6409): Docker builds default
+        # to webpack for this exact reason, since Turbopack's native (Rust) memory
+        # peaking exceeds 16 GB hosted runners on this Next 16.3.x line.
+        env:
+          OMNIROUTE_USE_TURBOPACK: "0"
         run: npm run build:release
 
       - name: Validate pack artifact
