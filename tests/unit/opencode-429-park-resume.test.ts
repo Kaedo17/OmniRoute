@@ -207,7 +207,9 @@ describe("opencode 429 park-and-resume", () => {
   });
 
   it("flag off keeps the exact current rotation", async () => {
-    delete process.env[FLAG];
+    // Explicit disable (env "0") — the fork default for the flag is now ON,
+    // so unset env would resolve to parked replay via the definition default.
+    process.env[FLAG] = "0";
     installFetch(
       Array.from({ length: BURST_PARK_THRESHOLD }, () => ({ status: 429, body: BURST_BODY }))
     );
@@ -446,7 +448,8 @@ describe("opencode 429 park-and-resume", () => {
     });
 
     it("keeps the current rotation when the park flag is off, even with set-asides", async () => {
-      delete process.env[FLAG];
+      // Explicit disable (env "0") — unset now resolves to the fork-on default.
+      process.env[FLAG] = "0";
       const nowMs = Date.now();
       const [first, second] = egressKeys(2);
       const setAsideAt = nowMs - (300_000 - 30_000);

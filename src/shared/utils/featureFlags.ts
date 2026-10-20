@@ -405,9 +405,10 @@ export function isAntigravityAccountLeaseEnabled(
 }
 
 /**
- * OpenCode 429 park-and-resume. Opt-in: when off, every 429 rotates to the
- * next account exactly as before.
- * Fail closed: an unreadable flag store keeps the pre-flag behavior (disabled).
+ * OpenCode 429 park-and-resume. Fork default: ON (definition default "true") —
+ * the parked replay waits a burst 429 window out instead of surfacing it.
+ * Explicitly disabling restores rotate-then-surface. Fail closed: an
+ * unreadable flag store still keeps the pre-flag behavior (disabled).
  */
 export function isOpencodeParkAndResumeEnabled(): boolean {
   try {
@@ -439,12 +440,12 @@ export function isStreamReadinessStallRetryEnabled(): boolean {
 }
 
 /**
- * OpenCode 429 pool re-selection. Opt-in: when off, every 429 rotates to the
- * next account exactly as before. When on, a 429 from an egress-bucketed
- * provider on a proxy-less account under an ambient pool context asks the
- * pool for another member for the next attempt instead of retrying the same
- * egress address. Fail closed: an unreadable flag store keeps the pre-flag
- * behavior (disabled).
+ * OpenCode 429 pool re-selection. Fork default: ON (definition default
+ * "true") — a 429 from an egress-bucketed provider on a proxy-less account
+ * under an ambient pool context asks the pool for another member for the next
+ * attempt instead of retrying the same egress address. Explicitly disabling
+ * restores plain rotation. Fail closed: an unreadable flag store still keeps
+ * the pre-flag behavior (disabled).
  */
 export function isOpencodePoolReselectEnabled(): boolean {
   try {
