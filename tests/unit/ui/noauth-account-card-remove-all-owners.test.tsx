@@ -159,4 +159,33 @@ describe("NoAuthAccountCard remove clears EVERY owning row", () => {
       return putBodies.length > 0 && text.includes("removeFailed");
     });
   });
+
+  it("renders the remove button visible on touch devices (no hover to reveal it)", async () => {
+    stubConnections([
+      {
+        id: "conn-1",
+        provider: PROVIDER_ID,
+        providerSpecificData: { fingerprints: ["z-9"], accountProxies: [] },
+      },
+    ]);
+    const el = renderCard();
+    await waitFor(() => grid(el)?.querySelectorAll("[data-account-id]").length === 1);
+
+    const chip = Array.from(grid(el)!.querySelectorAll<HTMLElement>("[data-account-id]")).find(
+      (n) => n.dataset.accountId === "z-9"
+    )!;
+    const removeBtn = chip.querySelector<HTMLButtonElement>('button[aria-label="removeAccount"]')!;
+    expect(removeBtn).toBeTruthy();
+
+    const cls = removeBtn.className;
+    // Regression: the button used to be opacity-0 revealed ONLY by
+    // group-hover — invisible for good on touch devices, which is where the
+    // dashboard is actually used. It must now (a) stay discoverable on mouse
+    // (faint base opacity, full on hover) and (b) be fully visible on
+    // hover-less devices via the [@media(hover:none)] variant.
+    expect(cls).toMatch(/opacity-40\b/);
+    expect(cls).toMatch(/group-hover:opacity-100/);
+    expect(cls).toMatch(/\[@media\(hover:none\)\]:opacity-100/);
+    expect(cls).not.toMatch(/(^|[\s"])opacity-0([\s"]|$)/);
+  });
 });
