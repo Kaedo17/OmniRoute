@@ -831,7 +831,7 @@ export default function NoAuthAccountCard({
                   <button
                     type="button"
                     onClick={() => handleRemoveAccount(id)}
-                    className="shrink-0 rounded p-1 text-text-muted opacity-0 transition-colors hover:bg-red-500/10 hover:text-red-500 group-hover:opacity-100"
+                    className="shrink-0 rounded p-1 text-text-muted opacity-40 transition-colors hover:bg-red-500/10 hover:text-red-500 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
                     aria-label={t("removeAccount")}
                   >
                     <span className="material-symbols-outlined text-[16px]">delete</span>
