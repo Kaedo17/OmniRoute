@@ -85,6 +85,12 @@ jobs:
       contents: write # gh release create/upload (attach the tarball asset)
     outputs:
       tarball: ${{ steps.pack.outputs.tarball }}
+    env:
+      # Job-level so BOTH the build and the check see it: check:pack-artifact
+      # reads this at VALIDATION time (validate-pack-artifact.ts:220) to record
+      # the fork's deliberate canary — its release line is the default branch
+      # (fix/opencode-free-tier-keyed-lane), not upstream's release/* tips (#10427).
+      OMNIROUTE_ALLOW_CANARY_BUILD: "1"
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -119,10 +125,6 @@ jobs:
         # peaking exceeds 16 GB hosted runners on this Next 16.3.x line.
         env:
           OMNIROUTE_USE_TURBOPACK: "0"
-          # This fork's release line is its default branch (fix/opencode-free-tier-keyed-lane),
-          # not upstream's release/* tips — provenance check #10427 calls for an
-          # explicit canary ack to ship from it.
-          OMNIROUTE_ALLOW_CANARY_BUILD: "1"
         run: npm run build:release
 
       - name: Validate pack artifact
