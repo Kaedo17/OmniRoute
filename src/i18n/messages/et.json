@@ -13279,6 +13279,7 @@
     "add": "Lisa",
     "manualApiKey": "Kasuta käsitsi sisestatud API-võtit",
     "createDahlTokenFailed": "Dahl-tokeni loomine ebaõnnestus",
+    "removeFailed": "Konto eemaldamine ebaõnnestus",
     "providerProxy": "Puhverserver",
     "providerProxyConfigureHint": "Seadista puhverserver",
     "providerProxyTitleConfigured": "Puhverserver on seadistatud: {host}",

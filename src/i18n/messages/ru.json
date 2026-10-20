@@ -13279,6 +13279,7 @@
     "add": "Добавить",
     "manualApiKey": "Использовать ручной API-ключ",
     "createDahlTokenFailed": "Не удалось создать токен Dahl",
+    "removeFailed": "Не удалось удалить аккаунт",
     "providerProxy": "Прокси",
     "providerProxyConfigureHint": "Настроить прокси",
     "providerProxyTitleConfigured": "Прокси настроен: {host}",

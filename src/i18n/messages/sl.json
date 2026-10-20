@@ -13279,6 +13279,7 @@
     "add": "Dodaj",
     "manualApiKey": "Uporabi ročno vnesen ključ API",
     "createDahlTokenFailed": "Žetona Dahl ni bilo mogoče ustvariti",
+    "removeFailed": "Odstranjevanje računa ni uspelo",
     "providerProxy": "Posredniški strežnik",
     "providerProxyConfigureHint": "Nastavi posredniški strežnik",
     "providerProxyTitleConfigured": "Posredniški strežnik je nastavljen: {host}",

@@ -283,6 +283,7 @@ export default function NoAuthAccountCard({
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [removeFailed, setRemoveFailed] = useState(false);
   const [proxyAccountId, setProxyAccountId] = useState<string | null>(null);
   const [proxyMode, setProxyMode] = useState<"saved" | "custom">("saved");
   const [savedProxies, setSavedProxies] = useState<SavedProxy[]>([]);
@@ -529,29 +530,42 @@ export default function NoAuthAccountCard({
   };
 
   const handleRemoveAccount = async (accountId: string) => {
-    // Remove from the row that actually OWNS the fingerprint (the display list is
-    // a union across connections), not blindly from connections[0].
-    const owner = connections.find((c) => ownAccountIds(c, dataKey).includes(accountId)) ?? conn;
-    if (!owner) return;
-    // Dedupe on write too: rows already damaged by the old union-write keep their
-    // duplicated fingerprints until any add/remove rebuilds this array (self-heal).
-    const updated = [...new Set(ownAccountIds(owner, dataKey).filter((id) => id !== accountId))];
-    const updatedProxies = getAccountProxies(owner).filter((p) => p.fingerprint !== accountId);
-    try {
-      const res = await fetch(`/api/providers/${owner.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          providerSpecificData: {
-            [dataKey]: updated,
-            accountProxies: updatedProxies,
-          },
-        }),
-      });
-      if (res.ok) await fetchConnections();
-    } catch (err) {
-      console.error("Failed to remove account:", err);
+    // The display list is a deduped union across rows, so the same fingerprint
+    // may be owned by MORE than one row (the old union-write left duplicates
+    // behind). Strip it from EVERY owning row — removing only the first one
+    // left the copies behind and the chip rendered again intact on refresh.
+    const owners = connections.filter((c) => ownAccountIds(c, dataKey).includes(accountId));
+    if (owners.length === 0) return;
+    setRemoveFailed(false);
+    const results = await Promise.allSettled(
+      owners.map(async (owner) => {
+        // Dedupe on write too: rows already damaged by the old union-write keep
+        // their duplicated fingerprints until any add/remove rebuilds this
+        // array (self-heal).
+        const updated = [
+          ...new Set(ownAccountIds(owner, dataKey).filter((id) => id !== accountId)),
+        ];
+        const updatedProxies = getAccountProxies(owner).filter((p) => p.fingerprint !== accountId);
+        const res = await fetch(`/api/providers/${owner.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            providerSpecificData: {
+              [dataKey]: updated,
+              accountProxies: updatedProxies,
+            },
+          }),
+        });
+        if (!res.ok)
+          throw new Error(`remove account ${accountId}: PUT ${owner.id} -> ${res.status}`);
+      })
+    );
+    if (results.some((r) => r.status === "rejected")) {
+      // Surface the failure — silently swallowing it meant the user saw nothing
+      // happen and no way to tell a failed write from a stale render.
+      setRemoveFailed(true);
     }
+    await fetchConnections();
   };
 
   const openProxyConfig = (accountId: string) => {
@@ -826,6 +840,12 @@ export default function NoAuthAccountCard({
               );
             })}
           </div>
+        )}
+
+        {removeFailed && (
+          <p data-testid="noauth-remove-failed" className="py-2 text-xs text-red-500">
+            {t("removeFailed")}
+          </p>
         )}
 
         {proxyAccountId && (

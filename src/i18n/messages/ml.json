@@ -13279,6 +13279,7 @@
     "add": "ചേർക്കുക",
     "manualApiKey": "ഒരു മാനുവൽ API കീ ഉപയോഗിക്കുക",
     "createDahlTokenFailed": "Dahl ടോക്കൺ സൃഷ്ടിക്കുന്നതിൽ പരാജയപ്പെട്ടു",
+    "removeFailed": "അക്കൗണ്ട് നീക്കം ചെയ്യുന്നതിൽ പരാജയപ്പെട്ടു",
     "providerProxy": "പ്രോക്സി",
     "providerProxyConfigureHint": "പ്രോക്സി കോൺഫിഗർ ചെയ്യുക",
     "providerProxyTitleConfigured": "പ്രോക്സി കോൺഫിഗർ ചെയ്തു: {host}",

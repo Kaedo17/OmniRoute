@@ -13279,6 +13279,7 @@
     "add": "Pridėti",
     "manualApiKey": "Naudoti rankiniu būdu įvestą API raktą",
     "createDahlTokenFailed": "Nepavyko sukurti Dahl prieigos rakto",
+    "removeFailed": "Nepavyko pašalinti paskyrą",
     "providerProxy": "Tarpinis serveris",
     "providerProxyConfigureHint": "Konfigūruoti tarpinį serverį",
     "providerProxyTitleConfigured": "Tarpinis serveris sukonfigūruotas: {host}",

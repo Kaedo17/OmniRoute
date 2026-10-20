@@ -13279,6 +13279,7 @@
     "add": "Ekle",
     "manualApiKey": "Manuel API anahtarı kullanın",
     "createDahlTokenFailed": "Dahl token oluşturulamadı",
+    "removeFailed": "Hesap kaldırılamadı",
     "providerProxy": "Vekil sunucu",
     "providerProxyConfigureHint": "Proxy'yi yapılandırın",
     "providerProxyTitleConfigured": "Proxy yapılandırıldı: {host}",

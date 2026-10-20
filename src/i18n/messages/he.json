@@ -13279,6 +13279,7 @@
     "add": "הוסף",
     "manualApiKey": "השתמש במפתח API ידני",
     "createDahlTokenFailed": "נכשל ביצירת טוקן דל",
+    "removeFailed": "הסרת החשבון נכשלה",
     "providerProxy": "פרוקסי",
     "providerProxyConfigureHint": "הגדר פרוקסי",
     "providerProxyTitleConfigured": "פרוקסי מוגדר: {host}",

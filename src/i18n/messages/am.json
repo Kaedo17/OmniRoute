@@ -13279,6 +13279,7 @@
     "add": "አክል",
     "manualApiKey": "በእጅ የሚገባ API ቁልፍ ተጠቀም",
     "createDahlTokenFailed": "የDahl ቶከን መፍጠር አልተሳካም",
+    "removeFailed": "Failed to remove account",
     "providerProxy": "ፕሮክሲ",
     "providerProxyConfigureHint": "ፕሮክሲ አዋቅር",
     "providerProxyTitleConfigured": "ፕሮክሲ ተዋቅሯል፦ {host}",

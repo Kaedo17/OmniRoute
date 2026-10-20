@@ -13279,6 +13279,7 @@
     "add": "追加",
     "manualApiKey": "手動APIキーを使用する",
     "createDahlTokenFailed": "Dahlトークンの作成に失敗しました",
+    "removeFailed": "アカウントの削除に失敗しました",
     "providerProxy": "プロキシ",
     "providerProxyConfigureHint": "プロキシを設定する",
     "providerProxyTitleConfigured": "プロキシが設定されました: {host}",

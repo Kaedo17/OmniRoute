@@ -13279,6 +13279,7 @@
     "add": "Toevoegen",
     "manualApiKey": "Gebruik een handmatige API-sleutel",
     "createDahlTokenFailed": "Mislukt om Dahl-token te maken",
+    "removeFailed": "Kon account niet verwijderen",
     "providerProxy": "Proxy",
     "providerProxyConfigureHint": "Configureer proxy",
     "providerProxyTitleConfigured": "Proxy geconfigureerd: {host}",

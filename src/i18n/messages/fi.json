@@ -13279,6 +13279,7 @@
     "add": "Lisää",
     "manualApiKey": "Käytä manuaalista API-avainta",
     "createDahlTokenFailed": "Dahl-tokenin luominen epäonnistui",
+    "removeFailed": "Tilin poistaminen epäonnistui",
     "providerProxy": "Välimuisti",
     "providerProxyConfigureHint": "Määritä välityspalvelin",
     "providerProxyTitleConfigured": "Proxy on määritetty: {host}",

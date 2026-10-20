@@ -13279,6 +13279,7 @@
     "add": "Əlavə et",
     "manualApiKey": "İstifadəçi API açarını əl ilə daxil etsin",
     "createDahlTokenFailed": "Dahl token yaratmaq mümkün olmadı",
+    "removeFailed": "Hesabı silmək alınmadı",
     "providerProxy": "Proksi",
     "providerProxyConfigureHint": "Proksi konfiqurasiya et",
     "providerProxyTitleConfigured": "Proxy konfiqurasiya edilib: {host}",

@@ -13279,6 +13279,7 @@
     "add": "បន្ថែម",
     "manualApiKey": "ប្រើសោ API ដោយបញ្ចូលផ្ទាល់",
     "createDahlTokenFailed": "បរាជ័យក្នុងការបង្កើតថូខឹន Dahl",
+    "removeFailed": "បានបរាជ័យក្នុងការដកគណនីចេញ",
     "providerProxy": "ប្រូកស៊ី",
     "providerProxyConfigureHint": "កំណត់រចនាសម្ព័ន្ធប្រូកស៊ី",
     "providerProxyTitleConfigured": "បានកំណត់រចនាសម្ព័ន្ធប្រូកស៊ី៖ {host}",

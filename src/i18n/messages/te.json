@@ -13279,6 +13279,7 @@
     "add": "చేర్చు",
     "manualApiKey": "మాన్యువల్ API కీని ఉపయోగించండి",
     "createDahlTokenFailed": "Dahl టోకెన్ సృష్టించడంలో విఫలమైంది",
+    "removeFailed": "ఖాతాను తీసివేయడం విఫలమైంది",
     "providerProxy": "ప్రాక్సీ",
     "providerProxyConfigureHint": "ప్రాక్సీని కాన్ఫిగర్ చేయండి",
     "providerProxyTitleConfigured": "ప్రాక్సీ కాన్ఫిగర్ చేయబడింది: {host}",

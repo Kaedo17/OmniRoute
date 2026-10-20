@@ -13279,6 +13279,7 @@
     "add": "Cuir leis",
     "manualApiKey": "Bain úsáid as eochair API láimhe",
     "createDahlTokenFailed": "Theip ar chomhartha Dahl a chruthú",
+    "removeFailed": "Theip ar bhaint an chuntais",
     "providerProxy": "Seachfhreastalaí",
     "providerProxyConfigureHint": "Cumraigh seachfhreastalaí",
     "providerProxyTitleConfigured": "Seachfhreastalaí cumraithe: {host}",

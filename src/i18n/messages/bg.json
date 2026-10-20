@@ -13279,6 +13279,7 @@
     "add": "Добави",
     "manualApiKey": "Използвайте ръчен API ключ",
     "createDahlTokenFailed": "Неуспешно създаване на токен Dahl",
+    "removeFailed": "Неуспешно премахване на профила",
     "providerProxy": "Прокси",
     "providerProxyConfigureHint": "Конфигурирайте прокси",
     "providerProxyTitleConfigured": "Конфигуриран прокси: {host}",

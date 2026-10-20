@@ -13279,6 +13279,7 @@
     "add": "Adicionar",
     "manualApiKey": "Usar uma chave de API manual",
     "createDahlTokenFailed": "Falha ao criar o token Dahl",
+    "removeFailed": "Falha ao remover a conta",
     "providerProxy": "Proxy",
     "providerProxyConfigureHint": "Configurar proxy",
     "providerProxyTitleConfigured": "Proxy configurado: {host}",

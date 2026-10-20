@@ -13279,6 +13279,7 @@
     "add": "ଯୋଡ଼ନ୍ତୁ",
     "manualApiKey": "ଏକ ମାନୁଆଲ୍ API କି ବ୍ୟବହାର କରନ୍ତୁ",
     "createDahlTokenFailed": "Dahl ଟୋକେନ୍ ସୃଷ୍ଟି କରିବାରେ ବିଫଳ",
+    "removeFailed": "ଆକାଉଣ୍ଟ ଅପସାରଣ ବିଫଳ ହେଲା",
     "providerProxy": "ପ୍ରକ୍ସି",
     "providerProxyConfigureHint": "ପ୍ରକ୍ସି ବିନ୍ୟାସ କରନ୍ତୁ",
     "providerProxyTitleConfigured": "ପ୍ରକ୍ସି ବିନ୍ୟାସ ହୋଇଛି: {host}",

@@ -13279,6 +13279,7 @@
     "add": "যোগ করুন",
     "manualApiKey": "একটি ম্যানুয়াল API কী ব্যবহার করুন",
     "createDahlTokenFailed": "Dahl টোকেন তৈরি করতে ব্যর্থ হয়েছে",
+    "removeFailed": "অ্যাকাউন্ট সরাতে ব্যর্থ হয়েছে",
     "providerProxy": "প্রক্সি",
     "providerProxyConfigureHint": "প্রক্সি কনফিগার করুন",
     "providerProxyTitleConfigured": "প্রক্সি কনফিগার করা হয়েছে: {host}",

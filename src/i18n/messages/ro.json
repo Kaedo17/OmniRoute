@@ -13279,6 +13279,7 @@
     "add": "Adaugă",
     "manualApiKey": "Folosește o cheie API manuală",
     "createDahlTokenFailed": "Nu s-a reușit crearea tokenului Dahl",
+    "removeFailed": "Eșec la eliminarea contului",
     "providerProxy": "Proxy",
     "providerProxyConfigureHint": "Configurează proxy",
     "providerProxyTitleConfigured": "Proxy configurat: {host}",

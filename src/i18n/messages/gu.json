@@ -13279,6 +13279,7 @@
     "add": "જોડો",
     "manualApiKey": "હાથથી API કીનો ઉપયોગ કરો",
     "createDahlTokenFailed": "Dahl ટોકન બનાવવામાં નિષ્ફળ",
+    "removeFailed": "ખાતો દૂર કરવામાં નિષ્ફળ",
     "providerProxy": "પ્રોક્સી",
     "providerProxyConfigureHint": "પ્રોક્સી સેટ કરો",
     "providerProxyTitleConfigured": "પ્રોક્સી કન્ફિગર કરેલ: {host}",

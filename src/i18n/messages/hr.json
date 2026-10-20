@@ -13279,6 +13279,7 @@
     "add": "Dodaj",
     "manualApiKey": "Koristi ručni API ključ",
     "createDahlTokenFailed": "Stvaranje Dahl tokena nije uspjelo",
+    "removeFailed": "Uklanjanje računa nije uspjelo",
     "providerProxy": "Proxy",
     "providerProxyConfigureHint": "Konfiguriraj proxy",
     "providerProxyTitleConfigured": "Proxy konfiguriran: {host}",

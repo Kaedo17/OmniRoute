@@ -13279,6 +13279,7 @@
     "add": "Tinye",
     "manualApiKey": "Jiri API key nke ejiri aka tinye",
     "createDahlTokenFailed": "Ịmepụta token Dahl dara",
+    "removeFailed": "Ọ dọ nwepụ akụntụ adabara",
     "providerProxy": "Proxy",
     "providerProxyConfigureHint": "Hazie proxy",
     "providerProxyTitleConfigured": "Ahaziela proxy: {host}",
