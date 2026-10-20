@@ -237,7 +237,8 @@ describe("opencode 429 pool re-selection per attempt", () => {
   });
 
   it("stays inert with the flag off even when a resolver is published", async () => {
-    delete process.env[FLAG];
+    // Explicit disable (env "0") — unset now resolves to the fork-on default.
+    process.env[FLAG] = "0";
     const result = (await runWith(
       { reselectPoolMember: async () => memberB() },
       ports[0],
