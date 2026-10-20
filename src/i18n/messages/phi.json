@@ -13279,6 +13279,7 @@
     "add": "Magdagdag",
     "manualApiKey": "Gumamit ng manual na API key",
     "createDahlTokenFailed": "Nabigong lumikha ng Dahl token",
+    "removeFailed": "Nabigo alisin ang account",
     "providerProxy": "Proxy",
     "providerProxyConfigureHint": "I-configure ang proxy",
     "providerProxyTitleConfigured": "Naka-configure ang Proxy: {host}",

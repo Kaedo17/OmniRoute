@@ -13279,6 +13279,7 @@
     "add": "اضافه کردن",
     "manualApiKey": "از کلید API دستی استفاده کنید",
     "createDahlTokenFailed": "ایجاد توکن دال ناموفق بود",
+    "removeFailed": "حذف حساب ناموفق بود",
     "providerProxy": "پراکسی",
     "providerProxyConfigureHint": "تنظیم پروکسی",
     "providerProxyTitleConfigured": "پروکسی پیکربندی شده: {host}",

@@ -13279,6 +13279,7 @@
     "add": "Ongeza",
     "manualApiKey": "Tumia funguo ya API ya mwongozo",
     "createDahlTokenFailed": "Imeshindikana kuunda token ya Dahl",
+    "removeFailed": "Imeshindwa kuondoa akaunti",
     "providerProxy": "Proksi",
     "providerProxyConfigureHint": "Sanidi proxy",
     "providerProxyTitleConfigured": "Proxy imewekwa: {host}",

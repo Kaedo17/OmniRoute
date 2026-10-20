@@ -13279,6 +13279,7 @@
     "add": "Ƙara",
     "manualApiKey": "Yi amfani da API key da aka shigar da hannu",
     "createDahlTokenFailed": "An kasa ƙirƙirar Dahl token",
+    "removeFailed": "Cire asusun bai yi nasara ba",
     "providerProxy": "Wakili",
     "providerProxyConfigureHint": "Saita proxy",
     "providerProxyTitleConfigured": "An saita proxy: {host}",

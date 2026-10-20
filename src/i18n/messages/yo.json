@@ -13279,6 +13279,7 @@
     "add": "Ṣàfikún",
     "manualApiKey": "Lo kọ́kọ́rọ́ API afọwọ́ṣe",
     "createDahlTokenFailed": "Ṣíṣẹ̀dá àmì Dahl kùnà",
+    "removeFailed": "Ìkọ̀wọ́ ìyàkúrò akántì kò ṣẹ̀",
     "providerProxy": "Aṣojú",
     "providerProxyConfigureHint": "Ṣètò proxy",
     "providerProxyTitleConfigured": "A ti ṣètò proxy: {host}",

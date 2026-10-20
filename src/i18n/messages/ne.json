@@ -13279,6 +13279,7 @@
     "add": "थप्नुहोस्",
     "manualApiKey": "म्यानुअल API कुञ्जी प्रयोग गर्नुहोस्",
     "createDahlTokenFailed": "Dahl टोकन सिर्जना गर्न असफल भयो",
+    "removeFailed": "खाता हटाउन असफल भयो",
     "providerProxy": "प्रोक्सी",
     "providerProxyConfigureHint": "प्रोक्सी कन्फिगर गर्नुहोस्",
     "providerProxyTitleConfigured": "प्रोक्सी कन्फिगर गरियो: {host}",

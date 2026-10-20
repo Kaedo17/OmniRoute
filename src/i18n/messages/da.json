@@ -13279,6 +13279,7 @@
     "add": "Tilføj",
     "manualApiKey": "Brug en manuel API-nøgle",
     "createDahlTokenFailed": "Fejl ved oprettelse af Dahl-token",
+    "removeFailed": "Fjernelse af kontoen mislykkedes",
     "providerProxy": "Proxy",
     "providerProxyConfigureHint": "Konfigurer proxy",
     "providerProxyTitleConfigured": "Proxy konfigureret: {host}",

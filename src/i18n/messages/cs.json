@@ -13279,6 +13279,7 @@
     "add": "Přidat",
     "manualApiKey": "Použijte manuální API klíč",
     "createDahlTokenFailed": "Nepodařilo se vytvořit token Dahl",
+    "removeFailed": "Odstranění účtu se nezdařilo",
     "providerProxy": "Proxy",
     "providerProxyConfigureHint": "Nastavit proxy",
     "providerProxyTitleConfigured": "Proxy nakonfigurován: {host}",

@@ -13279,6 +13279,7 @@
     "add": "Додај",
     "manualApiKey": "Користи ручни API кључ",
     "createDahlTokenFailed": "Креирање Dahl токена није успело",
+    "removeFailed": "Brisanje naloga nije uspelo",
     "providerProxy": "Proksi",
     "providerProxyConfigureHint": "Podesi proksi",
     "providerProxyTitleConfigured": "Proksi podešen: {host}",

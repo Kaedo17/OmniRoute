@@ -13279,6 +13279,7 @@
     "add": "أضف",
     "manualApiKey": "استخدم مفتاح API يدوي",
     "createDahlTokenFailed": "فشل في إنشاء رمز دال",
+    "removeFailed": "فشل في إزالة الحساب",
     "providerProxy": "وكيل",
     "providerProxyConfigureHint": "تكوين الوكيل",
     "providerProxyTitleConfigured": "تم تكوين الوكيل: {host}",

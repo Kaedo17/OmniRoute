@@ -13279,6 +13279,7 @@
     "add": "जोडा",
     "manualApiKey": "हाताने API की वापरा",
     "createDahlTokenFailed": "Dahl टोकन तयार करण्यात अयशस्वी झाले",
+    "removeFailed": "खाते काढण्यात अयशस्वी",
     "providerProxy": "प्रॉक्सी",
     "providerProxyConfigureHint": "प्रॉक्सी कॉन्फिगर करा",
     "providerProxyTitleConfigured": "प्रॉक्सी कॉन्फिगर केले: {host}",

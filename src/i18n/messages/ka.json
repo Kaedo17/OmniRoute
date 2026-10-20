@@ -13279,6 +13279,7 @@
     "add": "დამატება",
     "manualApiKey": "API გასაღების ხელით გამოყენება",
     "createDahlTokenFailed": "Dahl ტოკენის შექმნა ვერ მოხერხდა",
+    "removeFailed": "ანგარიშის წაშლა ვერ მოხერხდა",
     "providerProxy": "პროქსი",
     "providerProxyConfigureHint": "პროქსის კონფიგურაცია",
     "providerProxyTitleConfigured": "პროქსი კონფიგურირებულია: {host}",

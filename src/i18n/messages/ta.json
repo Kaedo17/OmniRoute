@@ -13279,6 +13279,7 @@
     "add": "சேர்க்கவும்",
     "manualApiKey": "ஒரு கையேடு API விசையை பயன்படுத்தவும்",
     "createDahlTokenFailed": "Dahl டோக்கன் உருவாக்குவதில் தோல்வி அடைந்தது",
+    "removeFailed": "கணக்கை அகற்றுவதில் தோல்வி",
     "providerProxy": "பிராக்சி",
     "providerProxyConfigureHint": "பிராக்ஸியை கட்டமைக்கவும்",
     "providerProxyTitleConfigured": "பிராக்ஸி அமைக்கப்பட்டுள்ளது: {host}",

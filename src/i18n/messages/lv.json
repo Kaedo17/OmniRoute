@@ -13279,6 +13279,7 @@
     "add": "Pievienot",
     "manualApiKey": "Izmantot manuāli ievadītu API atslēgu",
     "createDahlTokenFailed": "Neizdevās izveidot Dahl marķieri",
+    "removeFailed": "Neizdevās noņemt kontu",
     "providerProxy": "Starpniekserveris",
     "providerProxyConfigureHint": "Konfigurēt starpniekserveri",
     "providerProxyTitleConfigured": "Starpniekserveris konfigurēts: {host}",

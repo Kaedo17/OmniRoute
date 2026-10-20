@@ -13279,6 +13279,7 @@
     "add": "ထည့်ရန်",
     "manualApiKey": "API key ကို ကိုယ်တိုင်ထည့်သွင်း အသုံးပြုရန်",
     "createDahlTokenFailed": "Dahl token ကို ဖန်တီး၍ မရပါ",
+    "removeFailed": "အကောင့်ကို ဖယ်ရှားရန် မအောင်မြင်ပါ",
     "providerProxy": "ပရောက်စီ",
     "providerProxyConfigureHint": "ပရောက်စီကို စီစဉ်သတ်မှတ်ရန်",
     "providerProxyTitleConfigured": "ပရောက်စီကို စီစဉ်သတ်မှတ်ပြီးပါပြီ: {host}",

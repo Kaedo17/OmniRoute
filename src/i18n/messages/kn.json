@@ -13279,6 +13279,7 @@
     "add": "ಸೇರಿಸಿ",
     "manualApiKey": "ಹಸ್ತಚಾಲಿತ API ಕೀಲಿಯನ್ನು ಬಳಸಿ",
     "createDahlTokenFailed": "Dahl ಟೋಕನ್ ರಚಿಸಲು ವಿಫಲವಾಗಿದೆ",
+    "removeFailed": "ಖಾತೆಯನ್ನು ತೆಗೆದುಹಾರಲು ವಿಫಲವಾಗಿದೆ",
     "providerProxy": "ಪ್ರಾಕ್ಸಿ",
     "providerProxyConfigureHint": "ಪ್ರಾಕ್ಸಿಯನ್ನು ಕಾನ್ಫಿಗರ್ ಮಾಡಿ",
     "providerProxyTitleConfigured": "ಪ್ರಾಕ್ಸಿ ಕಾನ್ಫಿಗರ್ ಮಾಡಲಾಗಿದೆ: {host}",

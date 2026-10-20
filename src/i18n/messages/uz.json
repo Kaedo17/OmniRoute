@@ -13279,6 +13279,7 @@
     "add": "Qoʻshish",
     "manualApiKey": "Qoʻlda kiritiladigan API kalitidan foydalanish",
     "createDahlTokenFailed": "Dahl tokenini yaratib boʻlmadi",
+    "removeFailed": "Hisobni olib tashlash muvaffaqiyatsiz",
     "providerProxy": "Proksi",
     "providerProxyConfigureHint": "Proksini sozlash",
     "providerProxyTitleConfigured": "Proksi sozlangan: {host}",

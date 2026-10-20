@@ -13279,6 +13279,7 @@
     "add": "එක් කරන්න",
     "manualApiKey": "අතින් ඇතුළත් කරන API යතුරක් භාවිත කරන්න",
     "createDahlTokenFailed": "Dahl ටෝකනය සෑදීමට අසමත් විය",
+    "removeFailed": "ගිණුම ඉවත් කිරීම අසාර්ථක විය",
     "providerProxy": "ප්රොක්සි",
     "providerProxyConfigureHint": "ප්රොක්සි වින්යාස කරන්න",
     "providerProxyTitleConfigured": "ප්රොක්සි වින්යාස කර ඇත: {host}",

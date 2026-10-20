@@ -13279,6 +13279,7 @@
     "add": "Hozzáadás",
     "manualApiKey": "Használj kézi API kulcsot",
     "createDahlTokenFailed": "Sikertelen a Dahl token létrehozása",
+    "removeFailed": "A fiók eltávolítása nem sikerült",
     "providerProxy": "Proxy",
     "providerProxyConfigureHint": "Proxy beállítása",
     "providerProxyTitleConfigured": "Proxy beállítva: {host}",

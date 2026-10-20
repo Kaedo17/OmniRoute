@@ -13279,6 +13279,7 @@
     "add": "添加",
     "manualApiKey": "使用手动 API 密钥",
     "createDahlTokenFailed": "创建 Dahl 令牌失败",
+    "removeFailed": "移除账户失败",
     "providerProxy": "代理",
     "providerProxyConfigureHint": "配置代理",
     "providerProxyTitleConfigured": "代理已配置：{host}",

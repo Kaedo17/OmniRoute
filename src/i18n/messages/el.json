@@ -13279,6 +13279,7 @@
     "add": "Προσθήκη",
     "manualApiKey": "Χρήση μη αυτόματου κλειδιού API",
     "createDahlTokenFailed": "Αποτυχία δημιουργίας διακριτικού Dahl",
+    "removeFailed": "Αποτυχία αφαίρεσης λογαριασμού",
     "providerProxy": "Διακομιστής μεσολάβησης",
     "providerProxyConfigureHint": "Ρύθμιση διακομιστή μεσολάβησης",
     "providerProxyTitleConfigured": "Ρυθμίστηκε διακομιστής μεσολάβησης: {host}",

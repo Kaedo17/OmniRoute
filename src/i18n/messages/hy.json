@@ -13279,6 +13279,7 @@
     "add": "Ավելացնել",
     "manualApiKey": "Օգտագործել ձեռքով մուտքագրվող API բանալի",
     "createDahlTokenFailed": "Չհաջողվեց ստեղծել Dahl թոքենը",
+    "removeFailed": "Չհաջողվեց հեռացնել հաշիվը",
     "providerProxy": "Պրոքսի",
     "providerProxyConfigureHint": "Կարգավորել պրոքսին",
     "providerProxyTitleConfigured": "Պրոքսին կարգավորված է՝ {host}",

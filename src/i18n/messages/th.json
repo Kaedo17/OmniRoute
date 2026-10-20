@@ -13279,6 +13279,7 @@
     "add": "เพิ่ม",
     "manualApiKey": "ใช้คีย์ API แบบแมนนวล",
     "createDahlTokenFailed": "ไม่สามารถสร้างโทเค็น Dahl ได้",
+    "removeFailed": "ลบบัญชีไม่สำเร็จ",
     "providerProxy": "พร็อกซี",
     "providerProxyConfigureHint": "กำหนดค่าพร็อกซี",
     "providerProxyTitleConfigured": "กำหนดพร็อกซีแล้ว: {host}",

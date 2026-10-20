@@ -13279,6 +13279,7 @@
     "add": "شامل کریں",
     "manualApiKey": "ہاتھ سے API کلید استعمال کریں",
     "createDahlTokenFailed": "Dahl ٹوکن بنانے میں ناکامی",
+    "removeFailed": "اکاؤنٹ ہٹانے میں ناکام",
     "providerProxy": "پراکسی",
     "providerProxyConfigureHint": "پراکسی ترتیب دیں",
     "providerProxyTitleConfigured": "پراکسی ترتیب دی گئی: {host}",

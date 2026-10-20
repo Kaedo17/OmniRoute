@@ -13279,6 +13279,7 @@
     "add": "Żid",
     "manualApiKey": "Uża API key manwali",
     "createDahlTokenFailed": "Ma rnexxiex jinħoloq it-token ta’ Dahl",
+    "removeFailed": "Ma rnexxiex tnehħi l-kont",
     "providerProxy": "Proxy",
     "providerProxyConfigureHint": "Ikkonfigura l-proxy",
     "providerProxyTitleConfigured": "Proxy kkonfigurat: {host}",

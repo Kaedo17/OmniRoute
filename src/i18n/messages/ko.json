@@ -13279,6 +13279,7 @@
     "add": "추가",
     "manualApiKey": "수동 API 키 사용",
     "createDahlTokenFailed": "Dahl 토큰을 생성하지 못했습니다.",
+    "removeFailed": "계정을 삭제하지 못했습니다",
     "providerProxy": "프록시",
     "providerProxyConfigureHint": "프록시 구성",
     "providerProxyTitleConfigured": "프록시가 구성되었습니다: {host}",

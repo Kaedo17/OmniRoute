@@ -13279,6 +13279,7 @@
     "add": "Tambah",
     "manualApiKey": "Gunakan kunci API manual",
     "createDahlTokenFailed": "Gagal membuat token Dahl",
+    "removeFailed": "Gagal menghapus akun",
     "providerProxy": "Proksi",
     "providerProxyConfigureHint": "Konfigurasi proxy",
     "providerProxyTitleConfigured": "Proxy dikonfigurasi: {host}",

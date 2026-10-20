@@ -13279,6 +13279,7 @@
     "add": "Thêm",
     "manualApiKey": "Dùng khóa API thủ công",
     "createDahlTokenFailed": "Không thể tạo token Dahl",
+    "removeFailed": "Không thể xóa tài khoản",
     "providerProxy": "Proxy",
     "providerProxyConfigureHint": "Cấu hình proxy",
     "providerProxyTitleConfigured": "Đã cấu hình proxy: {host}",
