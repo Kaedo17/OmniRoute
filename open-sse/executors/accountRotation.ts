@@ -141,9 +141,30 @@ export function preferDirectEgress<T extends { proxy: { host: string; port: numb
   return accounts;
 }
 
+/**
+ * Distinct egress keys across a rotation fleet.
+ *
+ * Rotation is only as wide as the number of distinct egress addresses: a
+ * proxy-less member's rotation key IS the connection's shared ambient egress
+ * (`keyOfMember` in opencodeEgressThrottle), so N accounts behind one address
+ * produce one key. A 429 recorded against that key then excludes the whole
+ * fleet via the set-aside store, and the loop cannot move to another IP.
+ * Returns 1 for that collapsed case — used by the executor's rotation
+ * diagnostic.
+ */
+export function countDistinctEgress(
+  accounts: ReadonlyArray<{ proxy: { host: string; port: number } | null }>
+): number {
+  const keys = new Set(
+    accounts.map((account) =>
+      account.proxy ? `${account.proxy.host}:${account.proxy.port}` : "direct"
+    )
+  );
+  return keys.size;
+}
+
 /** Key derivation for the refusal store, injectable for pool-served members. */
 export type RotationEgressKeyOf = (account: RotatableAccount) => string | null;
-
 /** Default derivation: the account's own egress key (direct never). */
 const defaultRotationEgressKeyOf: RotationEgressKeyOf = (account) => proxyEgressKey(account.proxy);
 

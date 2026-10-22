@@ -177,6 +177,7 @@ import {
   isNoAuthProviderBlockedBySettings,
 } from "./noAuthProviderSettings";
 import { resolveAccountProxiesFromRegistry } from "./noAuthProxyResolution";
+import { mergeNoAuthProviderSpecificData } from "./noAuthProviderDataMerge";
 import { getNoAuthHydrationProviderIds } from "./noAuthProviderSiblings";
 import { loadOptionalNoAuthApiKeyCredentials } from "./noAuthOptionalApiKey";
 import { getResource404Bypass } from "./requestResourceHealth";
@@ -681,21 +682,6 @@ function buildSyntheticNoAuthCredentials(providerSpecificData: JsonRecord = {}):
     maxConcurrent: null,
     rateLimitMaxConcurrent: null,
   };
-}
-/** Merge one connection's fingerprints/accountProxies into `hydrated`, first-wins. */
-function mergeNoAuthProviderSpecificData(
-  hydrated: JsonRecord,
-  conn: { providerSpecificData?: unknown }
-): void {
-  const psd = conn.providerSpecificData;
-  if (!psd || typeof psd !== "object") return;
-  const record = psd as JsonRecord;
-  if (Array.isArray(record.fingerprints) && !Array.isArray(hydrated.fingerprints)) {
-    hydrated.fingerprints = record.fingerprints;
-  }
-  if (Array.isArray(record.accountProxies) && !Array.isArray(hydrated.accountProxies)) {
-    hydrated.accountProxies = record.accountProxies;
-  }
 }
 
 /**
@@ -2725,7 +2711,11 @@ export async function markAccountUnavailable(
     // #16824: a verified ModelScope model-access refusal does not invalidate
     // the credential. Probe isolation above takes precedence; real requests
     // lock only the rejected model and leave sibling models routable.
-    if (provider && model && isModelScopedAccessDenial(provider, status, errorText, options.structuredError)) {
+    if (
+      provider &&
+      model &&
+      isModelScopedAccessDenial(provider, status, errorText, options.structuredError)
+    ) {
       lockModel(provider, connectionId, model, "model_not_found", COOLDOWN_MS.notFound);
       return { shouldFallback: true, cooldownMs: 0 };
     }

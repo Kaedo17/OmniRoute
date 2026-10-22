@@ -41,6 +41,7 @@ import {
   pickAccount as pickRotatableAccount,
   maskAccountId,
   preferDirectEgress,
+  countDistinctEgress,
   isNetworkErrorRotatable,
   isEmptyUpstreamRejection,
   extractChatcmplId,
@@ -777,6 +778,16 @@ export class OpencodeExecutor extends BaseExecutor {
         resolveProxyForRequest
       );
       const { readAppliedKey, keyOfMember, noteRefused } = appliedEgress;
+
+      // Fork diagnostic: N accounts behind one address is a no-op rotation on a
+      // 429 — the refusal is set aside against the shared egress key and takes
+      // the whole fleet out at once, so the operator sees "no switching".
+      if (accounts.length > 1 && countDistinctEgress(accounts) === 1) {
+        log?.warn?.(
+          "OPENCODE",
+          `${cid}rotation fleet: ${accounts.length} accounts but 1 egress — a 429 cannot switch IP`
+        );
+      }
 
       for (let attempt = 0; attempt < accounts.length + emptyRejectionBudget; attempt++) {
         appliedEgress.resetAttempt();
