@@ -654,21 +654,38 @@ export default function NoAuthAccountCard({
 
     // #5217 (Gap 1): distribute stores by-id references too, so editing a pool
     // proxy later propagates to every account it was distributed to.
-    const updatedProxies: AccountProxyConfig[] = allAccountIds.map((fp, i) => ({
-      fingerprint: fp,
-      proxyId: savedProxies[i % savedProxies.length].id,
-    }));
+    //
+    // Rotation fix: write each connection row's OWN accounts back to that row.
+    // The old code built the cross-row union and PUT it to `conn.id` only, so
+    // accounts living on sibling rows never received a proxy. Their rotation
+    // key then fell back to the shared ambient egress and a single 429 set the
+    // whole fleet aside. The cursor stays global so ids still get distinct
+    // proxies across rows.
+    let cursor = 0;
+    const targets = connections
+      .map((row) => ({ row, ids: [...new Set(ownAccountIds(row, dataKey))] }))
+      .filter((target) => target.ids.length > 0);
 
-    const res = await fetch(`/api/providers/${conn.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        providerSpecificData: { accountProxies: updatedProxies },
-      }),
-    });
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData?.error || t("updateConnectionFailed"));
+    for (const { row, ids } of targets) {
+      const covered = new Set(ids);
+      const kept = getAccountProxies(row).filter((p) => !covered.has(p.fingerprint));
+      const distributed: AccountProxyConfig[] = ids.map((fp) => {
+        const poolProxy = savedProxies[cursor % savedProxies.length];
+        cursor += 1;
+        return { fingerprint: fp, proxyId: poolProxy.id };
+      });
+
+      const res = await fetch(`/api/providers/${row.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          providerSpecificData: { accountProxies: [...kept, ...distributed] },
+        }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData?.error || t("updateConnectionFailed"));
+      }
     }
 
     await fetchConnections();
